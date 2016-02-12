@@ -55,6 +55,6 @@ void __log_errno(const char* file, int line, const char* msg);
 
 #define LOG(priority, format, ...) __LOG_##priority(format, ## __VA_ARGS__)
 #define LOG_ERRNO(msg) __log_errno(NULL, -1, msg)
-#define LOG_ERRNO_HERE(msg) __log_errno(__FILE__, __LINE, msg)
+#define LOG_ERRNO_HERE(msg) __log_errno(__FILE__, __LINE__, msg)
 
 #endif /* _LOGGING_H_ */

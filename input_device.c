@@ -20,7 +20,7 @@
         void* __cleanup_label = &&cleanup_label;
 #define IOCTL(request, ...) \
         if (ioctl(__bound_ioctl_fd, request, ## __VA_ARGS__) < 0) { \
-            LOG_ERRNO(__message); \
+            LOG_ERRNO_HERE(__message); \
             goto *__cleanup_label; \
         }
 #define IOCTL_END }
