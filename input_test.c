@@ -114,6 +114,8 @@ void handle_client(int client_fd, device_t* device) {
         handle_event(device, &event);
     }
 
+    device_release_all_keys(device);
+
     LOG(INFO, "terminating connection");
 
     close(client_fd);

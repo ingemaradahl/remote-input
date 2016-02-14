@@ -319,8 +319,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // TODO: Release pressed buttons
-
     release_pointer(display);
     release_keyboard(display);
 
