@@ -74,7 +74,7 @@ void stdio_log(int priority, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
-    FILE* stream = priority > LOG_WARNING ? stderr : stdout;
+    FILE* stream = priority < LOG_WARNING ? stderr : stdout;
     fflush(stdout);
     fflush(stderr);
 
