@@ -23,6 +23,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <getopt.h>
 
 #include <errno.h>
 #include <signal.h>
@@ -33,6 +34,8 @@
 #include "server.h"
 
 const char const INPUT_DEVICE_NAME[] = "remote-input";
+
+const uint16_t DEFAULT_PORT_NUMBER = 4004;
 
 
 #define FATAL_ERRNO(format) { \
@@ -121,12 +124,60 @@ void handle_client(int client_fd, device_t* device) {
     close(client_fd);
 }
 
-int main(int argc, char** argv) {
-    int should_daemonize = 0;
+void usage(const char* program_name) {
+    printf("Usage: %s [OPTION]\n", program_name);
+    printf("\nOptions:\n"
+            "  -d               don't detach and do not become a daemon\n"
+            "  -l hostname/ip   hostname or ip on which to listen on\n"
+            "  -p port_number   "
+                "specify which port to bind to (defaults to %u)\n"
+            "  -v  --verbose    increase verbosity/logging level\n"
+            "  -h  --help       show this help text and exit\n"
+            , DEFAULT_PORT_NUMBER);
+}
 
-    if (argc > 1) {
-        if (strcmp(argv[1], "-d") == 0) {
-            should_daemonize = 1;
+int main(int argc, char* argv[]) {
+    bool dont_daemonize = false;
+    int verbosity = LOG_NOTICE;
+    uint16_t local_port = DEFAULT_PORT_NUMBER;
+    char* local_host = NULL;
+
+    struct option const long_options[] = {
+        {"help", no_argument, NULL, 'h'},
+        {"verbose", no_argument, NULL, 'v'},
+        {NULL, 0, NULL, 0}
+    };
+
+    int ch;
+    while ((ch = getopt_long(argc, argv, "dvhlp:", long_options, NULL)) > 0) {
+        switch (ch) {
+            case 'd':
+                dont_daemonize = true;
+                break;
+            case 'v':
+                if (verbosity < LOG_DEBUG) {
+                    verbosity++;
+                }
+                break;
+            case 'l':
+                local_host = optarg;
+                break;
+            case 'p':
+                {
+                    int port = strtol(optarg, NULL, 10);
+                    if (port < 1) {
+                        LOG(ERROR, "bad port number: %s", optarg);
+                        exit(EXIT_FAILURE);
+                    }
+                    local_port = (uint16_t) port;
+                }
+                break;
+            case 'h':
+                usage(argv[0]);
+                exit(EXIT_SUCCESS);
+            default:
+                usage(argv[0]);
+                exit(EXIT_FAILURE);
         }
     }
 
@@ -140,13 +191,13 @@ int main(int argc, char** argv) {
 
     install_signal_handlers();
 
-    int server_fd = server_create(NULL, 4004);
+    int server_fd = server_create(local_host, local_port);
     if (server_fd < 0) {
         exit(EXIT_FAILURE);
     }
 
     /* Wait until after server creation, making sure errors are obvious */
-    if (should_daemonize) {
+    if (!dont_daemonize) {
         daemonize();
     }
 
