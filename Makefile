@@ -1,4 +1,4 @@
-APP := input_test
+APP := inputd
 
 all: $(APP)
 
@@ -14,7 +14,7 @@ DEPFLAGS = -MMD -MP -MF $(DEPDIR)/$*.Td
 CFLAGS = $(DEPFLAGS) -c -std=c11 -Wall -Og -g -D_XOPEN_SOURCE=700
 CFLAGS += -Werror=format-security -Wshadow
 
-SRCS = input_test.c logging.c input_device.c server.c
+SRCS = inputd.c logging.c input_device.c server.c
 
 ifeq ($(TARGET), ANDROID)
 GCC_VERSION := 4.9
