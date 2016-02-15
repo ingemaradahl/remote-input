@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -97,6 +98,58 @@ fallback:
     return event_fd;
 }
 
+#if !defined(UI_GET_SYSNAME)
+int read_sysfs_device_path(const char* device_name, char* sysfs_device_path,
+        size_t device_path_size) {
+    FILE* device_stream = fopen("/proc/bus/input/devices", "r");
+    if (device_stream == NULL) {
+        LOG_ERRNO("error opening /proc/bus/input/devices");
+        return -1;
+    }
+
+    char name_pattern[512];
+    snprintf(name_pattern, sizeof(name_pattern), "N: Name=\"%s\"\n",
+            device_name);
+
+    int status = 0;
+    char* line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    while ((read = getline(&line, &len, device_stream)) != -1) {
+        // First, find the correct device section
+        if (read <= sizeof(name_pattern) &&
+                strncmp(line, name_pattern, read) != 0) {
+            continue;
+        }
+
+        // Found it, now look for the line pointing to the sysfs device
+        while ((read = getline(&line, &len, device_stream)) != -1) {
+            const char sysfs_pattern[] = "S: Sysfs=";
+            ssize_t pattern_len = sizeof(sysfs_pattern) - 1 /* \0 */;
+            if (strncmp(line, sysfs_pattern, pattern_len) != 0) {
+                continue;
+            }
+
+            // Found this line as well, copy it and break out of both loops
+            ssize_t sysfs_len = sizeof("/sys") - 1 /* \0 */;
+            ssize_t device_len = read - pattern_len + sysfs_len;
+            snprintf(sysfs_device_path, device_len, "/sys%s",
+                    &line[pattern_len] /* skip past the leading pattern */);
+            goto exit;
+        }
+
+        break;
+    }
+
+    status = -1;
+    LOG(ERROR, "error reading sysfs device from procfs");
+
+exit:
+    free(line);
+    return status;
+}
+#endif
+
 int device_create(const char* device_name, device_t* device) {
     device->uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (device->uinput_fd < 0) {
@@ -136,8 +189,8 @@ int device_create(const char* device_name, device_t* device) {
 
     IOCTL(UI_DEV_CREATE);
 
-#if defined(UI_GET_SYSNAME)
     char sysfs_device_path[] = "/sys/devices/virtual/input/inputNNNN";
+#if defined(UI_GET_SYSNAME)
     size_t dirname_size = sizeof("/sys/devices/virtual/input/") - 1 /* \0 */;
     size_t device_name_size = sizeof("inputNNNN");
     IOCTL(UI_GET_SYSNAME(device_name_size), &sysfs_device_path[dirname_size]);
@@ -145,13 +198,11 @@ int device_create(const char* device_name, device_t* device) {
 
     device->event_fd = open_event_device(sysfs_device_path);
 #else
-    /* TODO: Finding the sysfs node is unreliable, it's better to look up the
-     * device in /proc/bus/input/devices (based on const char* device_name) and
-     * find the appropriate handler (probably called event-something). That
-     * should later correspond to the proper device node in /dev/input.
-     * Hopefully.
-     */
-#warning "No UI_GET_SYSNAME"
+    if (read_sysfs_device_path(device_name, sysfs_device_path,
+                sizeof(sysfs_device_path)) != -1) {
+        LOG(DEBUG, "created %s", sysfs_device_path);
+        device->event_fd = open_event_device(sysfs_device_path);
+    }
 #endif
 
     IOCTL_END;
