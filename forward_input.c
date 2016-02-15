@@ -250,7 +250,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int connection = connect_to_server(argv[1], "9000");
+    int connection = connect_to_server(argv[1], "4004");
     if (connection < 0) {
         perror("error connecting to server");
         exit(EXIT_FAILURE);

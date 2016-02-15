@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 
     install_signal_handlers();
 
-    int server_fd = server_create(NULL, 9000);
+    int server_fd = server_create(NULL, 4004);
     if (server_fd < 0) {
         exit(EXIT_FAILURE);
     }
