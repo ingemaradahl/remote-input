@@ -25,7 +25,7 @@
         void* __cleanup_label = &&cleanup_label;
 #define IOCTL(request, ...) \
         if (ioctl(__bound_ioctl_fd, request, ## __VA_ARGS__) < 0) { \
-            LOG_ERRNO_HERE(__message); \
+            LOG_ERRNO_HERE("%s", __message); \
             goto *__cleanup_label; \
         }
 #define IOCTL_END }
@@ -36,7 +36,7 @@
 int open_event_device(const char* sysfs_device) {
     DIR* sysfs_dir = opendir(sysfs_device);
     if (sysfs_dir == NULL) {
-        LOG_ERRNO("error reading device descriptors");
+        LOG_ERRNO("error reading device from %s", sysfs_device);
         return -1;
     }
 
@@ -60,7 +60,7 @@ int open_event_device(const char* sysfs_device) {
                 node_entry->d_name);
         FILE* dev_file = fopen(path_buf, "r");
         if (dev_file == NULL) {
-            LOG_ERRNO("error reading device descriptors");
+            LOG_ERRNO("error opening %s", path_buf);
             continue;
         }
 

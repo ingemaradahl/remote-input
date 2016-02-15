@@ -33,10 +33,11 @@ enum log_target {
 
 void log_set_target(enum log_target target);
 
-PRINTF_TYPE(2,3)
+PRINTF_TYPE(2, 3)
 extern void(*__log_function)(int priority, const char* format, ...);
 
-void __log_errno(const char* file, int line, const char* msg);
+PRINTF_TYPE(3, 4)
+void __log_errno(const char* file, int line, const char* format, ...);
 
 #define __LOG_FATAL(format, ...) \
     __log_function(LOG_ALERT, format, ## __VA_ARGS__)
@@ -54,7 +55,8 @@ void __log_errno(const char* file, int line, const char* msg);
     __log_function(LOG_DEBUG, format, ## __VA_ARGS__)
 
 #define LOG(priority, format, ...) __LOG_##priority(format, ## __VA_ARGS__)
-#define LOG_ERRNO(msg) __log_errno(NULL, -1, msg)
-#define LOG_ERRNO_HERE(msg) __log_errno(__FILE__, __LINE__, msg)
+#define LOG_ERRNO(format, ...) __log_errno(NULL, -1, format, ## __VA_ARGS__)
+#define LOG_ERRNO_HERE(format, ...) \
+    __log_errno(__FILE__, __LINE__, format, ## __VA_ARGS__)
 
 #endif /* _LOGGING_H_ */

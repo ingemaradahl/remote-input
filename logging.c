@@ -109,11 +109,17 @@ void log_set_target(enum log_target target) {
     }
 }
 
-void __log_errno(const char* file, int line, const char* msg) {
-    if (file != NULL && line <= 0) {
-        LOG(ERROR, "%s:%d %s: %s", file, line, msg, strerror(errno));
+void __log_errno(const char* file, int line, const char* format, ...) {
+    char msg_buf[128];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(msg_buf, sizeof(msg_buf), format, args);
+    va_end(args);
+
+    if (file != NULL && line >= 0) {
+        LOG(ERROR, "%s:%d: %s: %s", file, line, msg_buf, strerror(errno));
         return;
     }
 
-    LOG(ERROR, "%s: %s", msg, strerror(errno));
+    LOG(ERROR, "%s: %s", msg_buf, strerror(errno));
 }
