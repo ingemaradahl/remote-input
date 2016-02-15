@@ -18,43 +18,12 @@
  */
 #include "logging.h"
 
-#include <errno.h>
-#include <libgen.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <syslog.h>
-#include <unistd.h>
-
 #include <linux/limits.h>
-
-const char* __executable_name = NULL;
-
-
-char* get_executable_name() {
-    char exe_path_buf[PATH_MAX];
-    if (readlink("/proc/self/exe", exe_path_buf, PATH_MAX) < 0) {
-        return NULL;
-    }
-
-    char* exe_basename = basename(exe_path_buf);
-    size_t exe_basename_len = strnlen(exe_basename, PATH_MAX);
-
-    if (exe_basename_len == 0 || exe_basename_len == PATH_MAX) {
-        return NULL;
-    }
-
-    char* executable_name = strndup(exe_basename, exe_basename_len);
-
-    return executable_name;
-}
-
-void log_init() {
-    if (__executable_name == NULL) {
-        __executable_name = get_executable_name();
-    }
-}
 
 
 char const * const PRIORITY_NAMES[] = {
@@ -78,7 +47,7 @@ void stdio_log(int priority, const char* format, ...) {
     fflush(stdout);
     fflush(stderr);
 
-    fprintf(stream, "[%s] %s: ", PRIORITY_NAMES[priority], __executable_name);
+    fprintf(stream, "[%s] ", PRIORITY_NAMES[priority]);
     vfprintf(stream, format, args);
     fprintf(stream, "\n");
 

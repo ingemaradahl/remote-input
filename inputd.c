@@ -124,7 +124,6 @@ void handle_client(int client_fd, device_t* device) {
 int main(int argc, char** argv) {
     int should_daemonize = 0;
 
-    log_init();
     if (argc > 1) {
         if (strcmp(argv[1], "-d") == 0) {
             should_daemonize = 1;
