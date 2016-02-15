@@ -86,11 +86,15 @@ int open_event_device(const char* sysfs_device) {
             LOG_ERRNO("error opening event device");
         }
 
+        break;
+
 fallback:
         snprintf(path_buf, PATH_MAX, "/dev/input/%s", node_entry->d_name);
         if ((event_fd = open(path_buf, O_WRONLY)) < 0) {
             LOG_ERRNO("error opening event device");
         }
+
+        break;
     }
 
     closedir(sysfs_dir);
