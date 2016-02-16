@@ -25,6 +25,11 @@
 #include <syslog.h>
 #include <linux/limits.h>
 
+#define CLAMP(val, low, high) (val > high ? high : (val < low ? low : val))
+
+int log_level = LOG_NOTICE;
+
+enum log_target selected_target = STDIO;
 
 char const * const PRIORITY_NAMES[] = {
     "", /* EMERG - unused*/
@@ -37,9 +42,19 @@ char const * const PRIORITY_NAMES[] = {
     "DEBUG"
 };
 
+void log_set_level(int level) {
+    log_level = CLAMP(level, LOG_ALERT, LOG_DEBUG);
+    if (selected_target == SYSLOG) {
+        setlogmask(LOG_UPTO(log_level));
+    }
+}
 
 PRINTF_TYPE(2,3)
 void stdio_log(int priority, const char* format, ...) {
+    if (priority > log_level) {
+        return;
+    }
+
     va_list args;
     va_start(args, format);
 
@@ -57,8 +72,6 @@ void stdio_log(int priority, const char* format, ...) {
 PRINTF_TYPE(2,3)
 void(*__log_function)(int priority, const char* format, ...) = &stdio_log;
 
-enum log_target selected_target = STDIO;
-
 void log_set_target(enum log_target target) {
     if (selected_target == target) {
         return;
@@ -74,6 +87,7 @@ void log_set_target(enum log_target target) {
 
     if (selected_target == SYSLOG) {
         openlog(NULL, LOG_NDELAY | LOG_PID, LOG_USER);
+        setlogmask(LOG_UPTO(log_level));
         __log_function = &syslog;
     }
 }

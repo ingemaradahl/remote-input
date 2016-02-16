@@ -33,6 +33,8 @@ enum log_target {
 
 void log_set_target(enum log_target target);
 
+void log_set_level(int level);
+
 PRINTF_TYPE(2, 3)
 extern void(*__log_function)(int priority, const char* format, ...);
 

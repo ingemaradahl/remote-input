@@ -181,6 +181,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    log_set_level(verbosity);
+
     struct input_device device;
     if (device_create(INPUT_DEVICE_NAME, &device) < 0) {
         LOG(FATAL, "couldn't create input device");
