@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
     }
 
     int client_fd;
-    while ((client_fd = server_accept(server_fd)) > 0) {
+    while ((client_fd = server_accept(server_fd)) != -1) {
         handle_client(client_fd, &device);
         if (caught_sigint) {
             break;
