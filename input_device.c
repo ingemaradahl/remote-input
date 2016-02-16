@@ -298,26 +298,23 @@ void device_mouse_move(device_t* device, int dx, int dy) {
     }
 }
 
-void device_key_down(device_t* device, uint16_t keycode) {
-    LOG(DEBUG, "KEY DOWN [%d]", keycode);
+void device_key_event(device_t* device, uint16_t keycode, int32_t value) {
     struct input_event event = {
         .type = EV_KEY,
         .code = keycode,
-        .value = BUTTON_PRESS
+        .value = value
     };
     gettimeofday(&event.time, NULL);
     commit_event(device, &event);
     sync_device(device);
 }
 
+void device_key_down(device_t* device, uint16_t keycode) {
+    LOG(DEBUG, "KEY DOWN [%d]", keycode);
+    device_key_event(device, keycode, BUTTON_PRESS);
+}
+
 void device_key_up(device_t* device, uint16_t keycode) {
     LOG(DEBUG, "KEY UP [%d]", keycode);
-    struct input_event event = {
-        .type = EV_KEY,
-        .code = keycode,
-        .value = BUTTON_RELEASE
-    };
-    gettimeofday(&event.time, NULL);
-    commit_event(device, &event);
-    sync_device(device);
+    device_key_event(device, keycode, BUTTON_RELEASE);
 }
