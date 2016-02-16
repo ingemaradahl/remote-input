@@ -31,17 +31,6 @@ int log_level = LOG_NOTICE;
 
 enum log_target selected_target = STDIO;
 
-char const * const PRIORITY_NAMES[] = {
-    "", /* EMERG - unused*/
-    "FATAL",
-    " CRIT",
-    "ERROR",
-    " WARN",
-    "NOTIC",
-    " INFO",
-    "DEBUG"
-};
-
 void log_set_level(int level) {
     log_level = CLAMP(level, LOG_ALERT, LOG_DEBUG);
     if (selected_target == SYSLOG) {
@@ -62,7 +51,6 @@ void stdio_log(int priority, const char* format, ...) {
     fflush(stdout);
     fflush(stderr);
 
-    fprintf(stream, "[%s] ", PRIORITY_NAMES[priority]);
     vfprintf(stream, format, args);
     fprintf(stream, "\n");
 
