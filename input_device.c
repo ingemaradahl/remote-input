@@ -292,7 +292,8 @@ void device_close(device_t* device) {
     device->uinput_fd = -1;
 }
 
-void commit_event(device_t* device, const struct input_event* event) {
+void commit_event(device_t* device, struct input_event* event) {
+    gettimeofday(&event->time, NULL);
     if (write(device->uinput_fd, event, sizeof(struct input_event)) < 0) {
         LOG_ERRNO("error commiting event");
     }
@@ -304,7 +305,6 @@ void sync_device(device_t* device) {
         .code = SYN_REPORT
     };
 
-    gettimeofday(&sync_event.time, NULL);
     commit_event(device, &sync_event);
 }
 
@@ -340,7 +340,6 @@ void device_key_event(device_t* device, uint16_t keycode, int32_t value) {
         .code = keycode,
         .value = value
     };
-    gettimeofday(&event.time, NULL);
     commit_event(device, &event);
     sync_device(device);
 }
