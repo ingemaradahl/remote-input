@@ -238,7 +238,6 @@ void device_release_all_keys(device_t* device) {
         for (int j = 0; j < 8; j++) {
             if (keys[i] & (1 << j)) {
                 device_key_up(device, (i*8) + j);
-
             }
         }
     }
