@@ -83,15 +83,16 @@ int open_event_device(const char* sysfs_device) {
                 goto fallback;
             }
 
-            LOG_ERRNO("error opening event device");
+            LOG_ERRNO("error opening event device %s", path_buf);
+        } else {
+            break;
         }
 
-        break;
 
 fallback:
         snprintf(path_buf, PATH_MAX, "/dev/input/%s", node_entry->d_name);
         if ((event_fd = open(path_buf, O_WRONLY)) < 0) {
-            LOG_ERRNO("error opening event device");
+            LOG_ERRNO("error opening fallback event device %s", path_buf);
         }
 
         break;
