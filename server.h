@@ -21,7 +21,7 @@
 
 #include <stdint.h>
 
-#include "shared.h"
+struct client_event;
 
 int server_create(const char* local_ip, uint16_t port);
 

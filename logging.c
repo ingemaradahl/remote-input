@@ -18,12 +18,11 @@
  */
 #include "logging.h"
 
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <syslog.h>
-#include <linux/limits.h>
 
 #define CLAMP(val, low, high) (val > high ? high : (val < low ? low : val))
 

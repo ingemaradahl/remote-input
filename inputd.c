@@ -16,22 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with remote-input.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <unistd.h>
-#include <pwd.h>
 #include <getopt.h>
-
-#include <errno.h>
+#include <pwd.h>
 #include <signal.h>
-#include <linux/input.h>
+#include <syslog.h>
 
 #include "input_device.h"
 #include "logging.h"
 #include "server.h"
+#include "shared.h"
 
 const char const INPUT_DEVICE_NAME[] = "remote-input";
 

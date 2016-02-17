@@ -21,13 +21,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-
+#include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <netdb.h>
+#include <netinet/in.h>
 
 #include "logging.h"
+#include "shared.h"
 
 
 int server_create(const char* local_ip, uint16_t port) {

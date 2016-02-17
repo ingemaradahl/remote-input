@@ -2,18 +2,17 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <string.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
-#include <linux/limits.h>
-#include <sys/types.h>
-#include <sys/time.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <errno.h>
+#include <sys/time.h>
 
 #include "logging.h"
 
