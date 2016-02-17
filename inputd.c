@@ -189,7 +189,6 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    drop_privileges();
 
     install_signal_handlers();
 
@@ -197,6 +196,8 @@ int main(int argc, char* argv[]) {
     if (server_fd < 0) {
         exit(EXIT_FAILURE);
     }
+
+    drop_privileges();
 
     /* Wait until after server creation, making sure errors are obvious */
     if (!dont_daemonize) {
