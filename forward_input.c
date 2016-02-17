@@ -213,6 +213,7 @@ void forward_key_button_event(Display* display, XEvent* event, int connection) {
     if (event->type == KeyPress || event->type == KeyRelease) {
         XKeyEvent* key_event = (XKeyEvent*)event;
 
+        // TODO: Add option to get the "raw" keysym (no layout)
         unsigned int keycode = key_event->keycode;
         KeySym keysym = XkbKeycodeToKeysym(display, keycode, 0, 0);
         cl_event.value = keysym_to_key(keysym);
