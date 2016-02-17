@@ -210,6 +210,10 @@ int device_create(const char* device_name, device_t* device) {
     }
 #endif
 
+    if (device->event_fd < 0) {
+        LOG(WARNING, "unable to open event device!");
+    }
+
     IOCTL_END;
 
     return 0;
@@ -275,6 +279,7 @@ void sync_device(device_t* device) {
 }
 
 void device_mouse_move(device_t* device, int dx, int dy) {
+    LOG(DEBUG, "MOUSE MOVE [%d,%d]", dx, dy);
     bool has_written = 0;
     struct input_event event;
 

@@ -113,7 +113,6 @@ void handle_client(int client_fd, device_t* device) {
     struct client_event event;
 
     while (read_client_event(client_fd, &event) > 0) {
-        LOG(DEBUG, "handling event");
         handle_event(device, &event);
     }
 
