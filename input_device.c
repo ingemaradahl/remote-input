@@ -17,8 +17,6 @@
 
 #include "logging.h"
 
-// TODO: If /dev/uinput wasn't found, try /dev/input/uinput
-
 #define IOCTL_BIND(fd, message, cleanup_label) { \
         int __bound_ioctl_fd = fd; \
         const char* __message = message; \
@@ -158,6 +156,14 @@ exit:
 int device_create(const char* device_name, device_t* device) {
     device->uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (device->uinput_fd < 0) {
+        if (errno == ENOENT) {
+            /* Some systems use an alternative location for the uinput device */
+            device->uinput_fd = open("/dev/input/uinput",
+                    O_WRONLY | O_NONBLOCK);
+
+            LOG_ERRNO("couldn't open either /dev/uinput or /dev/input/uinput");
+            LOG(ERROR, "is the uinput module loaded?");
+        }
         LOG_ERRNO("couldn't open /dev/uinput");
         return -1;
     }
