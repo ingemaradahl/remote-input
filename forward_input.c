@@ -20,16 +20,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
+#include <errno.h>
+#include <netdb.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/keysym.h>
-
-
-
-#include <errno.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netdb.h>
 
 #include "keysym_to_linux_code.h"
 #include "shared.h"
@@ -48,9 +46,16 @@ int g_original_pointer_y;
 int g_reset_pointer_x;
 int g_reset_pointer_y;
 
-int verbose = 1;
+int verbose = 0;
 
 unsigned int abort_mask = ShiftMask | ControlMask;
+
+void usage(const char* program_name) {
+    printf("Usage: %s [OPTION] HOSTNAME [PORT]\n", program_name);
+    puts("\nOptions:\n"
+            "  -v  --verbose    write emitted events to stdout\n"
+            "  -h  --help       show this help text and exit");
+}
 
 void get_screen_size(Display* display, int* ret_w, int* ret_h) {
     Window root_window = DefaultRootWindow(display);
@@ -243,6 +248,37 @@ void forward_key_button_event(Display* display, XEvent* event, int connection) {
 }
 
 int main(int argc, char* argv[]) {
+    int option;
+    while ((option = getopt(argc, argv, "vh")) > 0) {
+        switch (option) {
+            case 'v':
+                verbose = 1;
+                break;
+            case 'h':
+                usage(argv[0]);
+                exit(EXIT_SUCCESS);
+            default:
+                usage(argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    if (argc == optind) {
+        fprintf(stderr, "Missing hostname\n");
+        usage(argv[0]);
+        exit(EXIT_FAILURE);
+    } else if (argc > optind + 2) {
+        fprintf(stderr, "Invalid parameter: %s\n", argv[optind + 2]);
+        usage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    char* server_host = argv[optind++];
+    char* server_port = "4004";
+    if (argc > optind) {
+        server_port = argv[optind];
+    }
+
     Display* display = XOpenDisplay(NULL);
 
     if (display == NULL) {
@@ -250,14 +286,11 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int connection = connect_to_server(argv[1], "4004");
+    int connection = connect_to_server(server_host, server_port);
     if (connection < 0) {
         perror("error connecting to server");
         exit(EXIT_FAILURE);
     }
-
-    printf("connceted\n");
-
 
     lock_keyboard(display);
     lock_pointer(display);
