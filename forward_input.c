@@ -155,7 +155,9 @@ int connect_to_server(const char* host, const char* service) {
     };
 
     struct addrinfo* server_addrs;
-    if (getaddrinfo(host, service, &connection_hints, &server_addrs) < 0) {
+    int addr_res = getaddrinfo(host, service, &connection_hints, &server_addrs);
+    if (addr_res != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(addr_res));
         return -1;
     }
 
@@ -167,7 +169,7 @@ int connect_to_server(const char* host, const char* service) {
             continue;
         }
 
-        if (connect(socket_fd, addr->ai_addr, addr->ai_addrlen) != -1)
+        if (connect(socket_fd, addr->ai_addr, addr->ai_addrlen) == 0)
             break;
 
         close(socket_fd);
