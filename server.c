@@ -80,7 +80,7 @@ int server_create(const char* local_ip, uint16_t port) {
 
     char bound_ip[INET6_ADDRSTRLEN];
     inet_ntop(addr->ai_family, bound_address, bound_ip, sizeof(bound_ip));
-    LOG(INFO, "listening for connections on %s:%d", bound_ip,
+    LOG(NOTICE, "listening for connections on %s:%d", bound_ip,
             ntohs(bound_port));
     if (listen(socket_fd, 1) < 0) {
         LOG_ERRNO("listen error");
@@ -115,7 +115,7 @@ int server_accept(int server_fd) {
         return -1;
     }
 
-    LOG(INFO, "accepted connection from %s",
+    LOG(NOTICE, "accepted connection from %s",
             inet_ntoa(client_in_addr.sin_addr));
 
     return client_fd;
