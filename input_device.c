@@ -308,22 +308,22 @@ void sync_device(device_t* device) {
     commit_event(device, &sync_event);
 }
 
-void device_mouse_move(device_t* device, int dx, int dy) {
-    LOG(DEBUG, "MOUSE MOVE [%d,%d]", dx, dy);
+void mouse_event(device_t* device, uint16_t event_code_x,
+        uint16_t event_code_y, int dx, int dy) {
     bool has_written = 0;
-    struct input_event event;
+    struct input_event event = {
+        .type = EV_REL
+    };
 
     if (dx != 0) {
-        event.type = EV_REL;
-        event.code = REL_X;
+        event.code = event_code_x;
         event.value = dx;
         commit_event(device, &event);
         has_written = 1;
     }
 
     if (dy != 0) {
-        event.type = EV_REL;
-        event.code = REL_Y;
+        event.code = event_code_y;
         event.value = dy;
         commit_event(device, &event);
         has_written = 1;
@@ -332,6 +332,11 @@ void device_mouse_move(device_t* device, int dx, int dy) {
     if (has_written) {
         sync_device(device);
     }
+}
+
+void device_mouse_move(device_t* device, int dx, int dy) {
+    LOG(DEBUG, "MOUSE MOVE [%d,%d]", dx, dy);
+    mouse_event(device, REL_X, REL_Y, dx, dy);
 }
 
 void device_key_event(device_t* device, uint16_t keycode, int32_t value) {
