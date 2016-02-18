@@ -32,6 +32,8 @@ void device_close(device_t* device);
 
 void device_mouse_move(device_t*, int dx, int dy);
 
+void device_mouse_wheel(device_t*, int dx, int dy);
+
 void device_key_down(device_t*, uint16_t keycode);
 
 void device_key_up(device_t*, uint16_t keycode);

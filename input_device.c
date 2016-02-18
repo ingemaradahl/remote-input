@@ -339,6 +339,11 @@ void device_mouse_move(device_t* device, int dx, int dy) {
     mouse_event(device, REL_X, REL_Y, dx, dy);
 }
 
+void device_mouse_wheel(device_t* device, int dx, int dy) {
+    LOG(DEBUG, "MOUSE WHEEL [%d,%d]", dx, dy);
+    mouse_event(device, REL_HWHEEL, REL_WHEEL, dx, dy);
+}
+
 void device_key_event(device_t* device, uint16_t keycode, int32_t value) {
     struct input_event event = {
         .type = EV_KEY,

@@ -96,14 +96,27 @@ void drop_privileges() {
 }
 
 void handle_event(device_t* device, struct client_event* event) {
-    if (event->type == EV_MOUSE_DX) {
-        device_mouse_move(device, event->value, 0);
-    } else if (event->type == EV_MOUSE_DY) {
-        device_mouse_move(device, 0, event->value);
-    } else if (event->type == EV_KEY_DOWN) {
-        device_key_down(device, event->value);
-    } else if (event->type == EV_KEY_UP) {
-        device_key_up(device, event->value);
+    switch (event->type) {
+        case EV_MOUSE_DX:
+            device_mouse_move(device, event->value, 0);
+            break;
+        case EV_MOUSE_DY:
+            device_mouse_move(device, 0, event->value);
+            break;
+        case EV_KEY_DOWN:
+            device_key_down(device, event->value);
+            break;
+        case EV_KEY_UP:
+            device_key_up(device, event->value);
+            break;
+        case EV_WHEEL:
+            device_mouse_wheel(device, 0, event->value);
+            break;
+        case EV_HWHEEL:
+            device_mouse_wheel(device, event->value, 0);
+            break;
+        default:
+            LOG(ERROR, "unknown event type: %u", event->type);
     }
 }
 

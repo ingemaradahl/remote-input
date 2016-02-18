@@ -34,7 +34,6 @@
 /*
  * TODO: SIGPIPE when remote closed
  * TODO: Ungrab pointer/keyboard on signals (SIGSEGV)
- * TODO: Mouse wheel
  */
 
 
@@ -232,16 +231,33 @@ void forward_key_button_event(Display* display, XEvent* event, int connection) {
         XButtonEvent* button_event = (XButtonEvent*)event;
 
         unsigned int button = button_event->button;
-        cl_event.value = keysym_to_key(button);
 
-        if (cl_event.value == 0) {
-            return;
-        }
+        /* Linux handles mouse wheels as relative events */
+        if (button > 3 && button < 8) {
+            if (event->type == ButtonRelease) {
+                /* Don't send duplicate events */
+                return;
+            }
 
-        if (verbose) {
-            printf("[BUTTON %s] %u => %u\n",
-                    cl_event.type == EV_KEY_DOWN ? "DOWN" : "  UP",
-                    button, cl_event.value);
+            cl_event.type = button == 4 || button == 5 ? EV_WHEEL : EV_HWHEEL;
+            cl_event.value = button == 5 || button == 6 ? -1 : 1;
+
+            if (verbose) {
+                printf("[BUTTON DOWN] %u => WHEEL %u\n", button,
+                        cl_event.type);
+            }
+        } else {
+            cl_event.value = keysym_to_key(button);
+
+            if (cl_event.value == 0) {
+                return;
+            }
+
+            if (verbose) {
+                printf("[BUTTON %s] %u => %u\n",
+                        cl_event.type == EV_KEY_DOWN ? "DOWN" : "  UP",
+                        button, cl_event.value);
+            }
         }
     }
 

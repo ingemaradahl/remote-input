@@ -27,7 +27,7 @@
 #define EV_MOUSE_DX     3
 #define EV_MOUSE_DY     4
 #define EV_WHEEL        5
-#define EV_HWHEEL       5
+#define EV_HWHEEL       6
 
 struct client_event {
     uint16_t type;
