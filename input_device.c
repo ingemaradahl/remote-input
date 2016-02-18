@@ -276,14 +276,15 @@ void device_release_all_keys(device_t* device) {
 
 void device_close(device_t* device) {
     device_release_all_keys(device);
-    if (ioctl(device->uinput_fd, UI_DEV_DESTROY) < 0) {
-        LOG_ERRNO("error closing device");
-    }
 
     if (device->event_fd > 0 && close(device->event_fd < 0)) {
         LOG_ERRNO("error closing event device");
     }
     device->event_fd = -1;
+
+    if (ioctl(device->uinput_fd, UI_DEV_DESTROY) < 0) {
+        LOG_ERRNO("error closing device");
+    }
 
     if (close(device->uinput_fd) < 0) {
         LOG_ERRNO("error closing uinput device");
