@@ -130,7 +130,7 @@ void handle_client(struct client_info* client, device_t* device) {
 
     device_release_all_keys(device);
 
-    LOG(INFO, "terminating connection");
+    LOG(NOTICE, "terminating connection from %s", client->cl_addr);
 
     close(client->cl_fd);
 }
