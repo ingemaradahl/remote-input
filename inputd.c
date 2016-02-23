@@ -207,6 +207,9 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    LOG(NOTICE, "listening for connections on %s:%d", server.sv_addr,
+            server.sv_port);
+
     drop_privileges();
 
     /* Wait until after server creation, making sure errors are obvious */
@@ -216,6 +219,7 @@ int main(int argc, char* argv[]) {
 
     struct client_info client;
     while ((server_accept(&server, &client)) != -1) {
+        LOG(NOTICE, "accepted connection from %s", client.cl_addr);
         handle_client(&client, &device);
         if (caught_sigint) {
             break;

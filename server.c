@@ -80,8 +80,7 @@ int server_create(const char* local_ip, uint16_t port,
 
     inet_ntop(addr->ai_family, bound_address, server->sv_addr,
             sizeof(server->sv_addr));
-    LOG(NOTICE, "listening for connections on %s:%d", server->sv_addr,
-            server->sv_port);
+
     if (listen(socket_fd, 1) < 0) {
         LOG_ERRNO("listen error");
         goto cleanup;
@@ -125,8 +124,6 @@ int server_accept(struct server_info* server, struct client_info* client) {
         inet_ntop(AF_INET6, &ipv6_addr->sin6_addr, client->cl_addr,
                 sizeof(client->cl_addr));
     }
-
-    LOG(NOTICE, "accepted connection from %s", client->cl_addr);
 
     return 0;
 }
