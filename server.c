@@ -25,7 +25,6 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 
 #include "logging.h"
 #include "shared.h"
@@ -103,37 +102,37 @@ void server_close(int server_fd) {
     close(server_fd);
 }
 
-int server_accept(int server_fd) {
+int server_accept(int server_fd, struct client_info* client) {
     struct sockaddr_storage client_sockaddr;
     socklen_t client_addr_len = sizeof(client_sockaddr);
-    int client_fd = accept(server_fd, (struct sockaddr*)&client_sockaddr,
+    client->cl_fd = accept(server_fd, (struct sockaddr*)&client_sockaddr,
             &client_addr_len);
-    if (client_fd < 0) {
+    if (client->cl_fd < 0) {
         if (errno != EINTR) {
             LOG_ERRNO("accept error");
         }
         return -1;
     }
 
-    char client_addr[INET6_ADDRSTRLEN];
     if (client_sockaddr.ss_family == AF_INET) {
         struct sockaddr_in* ipv4_addr = (struct sockaddr_in*)&client_sockaddr;
-        inet_ntop(AF_INET, &ipv4_addr->sin_addr, client_addr, client_addr_len);
+        inet_ntop(AF_INET, &ipv4_addr->sin_addr, client->cl_addr,
+                sizeof(client->cl_addr));
     } else {
         assert(client_sockaddr.ss_family == AF_INET6);
         struct sockaddr_in6* ipv6_addr = (struct sockaddr_in6*)&client_sockaddr;
-        inet_ntop(AF_INET6, &ipv6_addr->sin6_addr, client_addr,
-                client_addr_len);
+        inet_ntop(AF_INET6, &ipv6_addr->sin6_addr, client->cl_addr,
+                sizeof(client->cl_addr));
     }
 
-    LOG(NOTICE, "accepted connection from %s", client_addr);
+    LOG(NOTICE, "accepted connection from %s", client->cl_addr);
 
-    return client_fd;
+    return 0;
 }
 
-int read_client_event(int client_fd, struct client_event* event) {
-    int read_length = read(client_fd, event, sizeof(struct client_event));
-    if (read_length < 0) {
+int read_client_event(struct client_info* client, struct client_event* event) {
+    int read_length = read(client->cl_fd, event, sizeof(struct client_event));
+    if (read_length < 0 && errno != EINTR) {
         LOG_ERRNO("error reading from client");
         return -1;
     }

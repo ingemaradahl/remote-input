@@ -120,10 +120,10 @@ void handle_event(device_t* device, struct client_event* event) {
     }
 }
 
-void handle_client(int client_fd, device_t* device) {
+void handle_client(struct client_info* client, device_t* device) {
     struct client_event event;
 
-    while (read_client_event(client_fd, &event) > 0) {
+    while (read_client_event(client, &event) > 0) {
         handle_event(device, &event);
     }
 
@@ -131,7 +131,7 @@ void handle_client(int client_fd, device_t* device) {
 
     LOG(INFO, "terminating connection");
 
-    close(client_fd);
+    close(client->cl_fd);
 }
 
 void usage(const char* program_name) {
@@ -214,9 +214,9 @@ int main(int argc, char* argv[]) {
         daemonize();
     }
 
-    int client_fd;
-    while ((client_fd = server_accept(server_fd)) != -1) {
-        handle_client(client_fd, &device);
+    struct client_info client;
+    while ((server_accept(server_fd, &client)) != -1) {
+        handle_client(&client, &device);
         if (caught_sigint) {
             break;
         }

@@ -20,15 +20,21 @@
 #define _SERVER_H_
 
 #include <stdint.h>
+#include <netinet/in.h>
 
 struct client_event;
+
+struct client_info {
+    char cl_addr[INET6_ADDRSTRLEN];
+    int cl_fd;
+};
 
 int server_create(const char* local_ip, uint16_t port);
 
 void server_close(int server_fd);
 
-int server_accept(int server_fd);
+int server_accept(int server_fd, struct client_info* client);
 
-int read_client_event(int client_fd, struct client_event* event);
+int read_client_event(struct client_info* client, struct client_event* event);
 
 #endif /* _SERVER_H_ */
