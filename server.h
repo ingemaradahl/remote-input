@@ -24,16 +24,22 @@
 
 struct client_event;
 
+struct server_info {
+    char sv_addr[INET6_ADDRSTRLEN];
+    uint16_t sv_port;
+    int sv_fd;
+};
+
 struct client_info {
     char cl_addr[INET6_ADDRSTRLEN];
     int cl_fd;
 };
 
-int server_create(const char* local_ip, uint16_t port);
+int server_create(const char* local_ip, uint16_t port, struct server_info*);
 
-void server_close(int server_fd);
+void server_close(struct server_info*);
 
-int server_accept(int server_fd, struct client_info* client);
+int server_accept(struct server_info*, struct client_info* client);
 
 int read_client_event(struct client_info* client, struct client_event* event);
 

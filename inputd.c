@@ -202,8 +202,8 @@ int main(int argc, char* argv[]) {
 
     install_signal_handlers();
 
-    int server_fd = server_create(local_host, local_port);
-    if (server_fd < 0) {
+    struct server_info server;
+    if (server_create(local_host, local_port, &server) < 0) {
         exit(EXIT_FAILURE);
     }
 
@@ -215,14 +215,14 @@ int main(int argc, char* argv[]) {
     }
 
     struct client_info client;
-    while ((server_accept(server_fd, &client)) != -1) {
+    while ((server_accept(&server, &client)) != -1) {
         handle_client(&client, &device);
         if (caught_sigint) {
             break;
         }
     }
 
-    server_close(server_fd);
+    server_close(&server);
     device_close(&device);
 
     LOG(INFO, "terminating successfully");

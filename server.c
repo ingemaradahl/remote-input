@@ -30,7 +30,8 @@
 #include "shared.h"
 
 
-int server_create(const char* local_ip, uint16_t port) {
+int server_create(const char* local_ip, uint16_t port,
+        struct server_info* server) {
     char port_str[6];
     snprintf(port_str, sizeof(port_str), "%u", port);
 
@@ -66,23 +67,21 @@ int server_create(const char* local_ip, uint16_t port) {
     }
 
     void* bound_address;
-    uint16_t bound_port;
     if (addr->ai_family == AF_INET) {
         struct sockaddr_in* ipv4_addr = (struct sockaddr_in*)addr->ai_addr;
         bound_address = &(ipv4_addr->sin_addr);
-        bound_port = ipv4_addr->sin_port;
-
+        server->sv_port = ntohs(ipv4_addr->sin_port);
     } else {
         assert(addr->ai_family == AF_INET6);
         struct sockaddr_in6* ipv6_addr = (struct sockaddr_in6*)addr->ai_addr;
         bound_address = &(ipv6_addr->sin6_addr);
-        bound_port = ipv6_addr->sin6_port;
+        server->sv_port = ntohs(ipv6_addr->sin6_port);
     }
 
-    char bound_ip[INET6_ADDRSTRLEN];
-    inet_ntop(addr->ai_family, bound_address, bound_ip, sizeof(bound_ip));
-    LOG(NOTICE, "listening for connections on %s:%d", bound_ip,
-            ntohs(bound_port));
+    inet_ntop(addr->ai_family, bound_address, server->sv_addr,
+            sizeof(server->sv_addr));
+    LOG(NOTICE, "listening for connections on %s:%d", server->sv_addr,
+            server->sv_port);
     if (listen(socket_fd, 1) < 0) {
         LOG_ERRNO("listen error");
         goto cleanup;
@@ -90,7 +89,9 @@ int server_create(const char* local_ip, uint16_t port) {
 
     freeaddrinfo(local_addrs);
 
-    return socket_fd;
+    server->sv_fd = socket_fd;
+
+    return 0;
 
 cleanup:
     freeaddrinfo(local_addrs);
@@ -98,14 +99,14 @@ cleanup:
     return -1;
 }
 
-void server_close(int server_fd) {
-    close(server_fd);
+void server_close(struct server_info* server) {
+    close(server->sv_fd);
 }
 
-int server_accept(int server_fd, struct client_info* client) {
+int server_accept(struct server_info* server, struct client_info* client) {
     struct sockaddr_storage client_sockaddr;
     socklen_t client_addr_len = sizeof(client_sockaddr);
-    client->cl_fd = accept(server_fd, (struct sockaddr*)&client_sockaddr,
+    client->cl_fd = accept(server->sv_fd, (struct sockaddr*)&client_sockaddr,
             &client_addr_len);
     if (client->cl_fd < 0) {
         if (errno != EINTR) {
