@@ -102,12 +102,10 @@ void server_close(int server_fd) {
 }
 
 int server_accept(int server_fd) {
-    // TODO: Not neccecarily a sockaddr_in, could be sockaddr_in6
-    struct sockaddr_in client_in_addr;
-    struct sockaddr* client_addr = (struct sockaddr*)&client_in_addr;
-    socklen_t in_addr_len = sizeof(client_in_addr);
-
-    int client_fd = accept(server_fd, client_addr, &in_addr_len);
+    struct sockaddr_storage client_sockaddr;
+    socklen_t client_addr_len = sizeof(client_sockaddr);
+    int client_fd = accept(server_fd, (struct sockaddr*)&client_sockaddr,
+            &client_addr_len);
     if (client_fd < 0) {
         if (errno != EINTR) {
             LOG_ERRNO("accept error");
@@ -115,8 +113,17 @@ int server_accept(int server_fd) {
         return -1;
     }
 
-    LOG(NOTICE, "accepted connection from %s",
-            inet_ntoa(client_in_addr.sin_addr));
+    char client_addr[INET6_ADDRSTRLEN];
+    if (client_sockaddr.ss_family == AF_INET) {
+        struct sockaddr_in* ipv4_addr = (struct sockaddr_in*)&client_sockaddr;
+        inet_ntop(AF_INET, &ipv4_addr->sin_addr, client_addr, client_addr_len);
+    } else {
+        struct sockaddr_in6* ipv6_addr = (struct sockaddr_in6*)&client_sockaddr;
+        inet_ntop(AF_INET6, &ipv6_addr->sin6_addr, client_addr,
+                client_addr_len);
+    }
+
+    LOG(NOTICE, "accepted connection from %s", client_addr);
 
     return client_fd;
 }
