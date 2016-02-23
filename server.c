@@ -18,6 +18,7 @@
  */
 #include "server.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -73,6 +74,7 @@ int server_create(const char* local_ip, uint16_t port) {
         bound_port = ipv4_addr->sin_port;
 
     } else {
+        assert(addr->ai_family == AF_INET6);
         struct sockaddr_in6* ipv6_addr = (struct sockaddr_in6*)addr->ai_addr;
         bound_address = &(ipv6_addr->sin6_addr);
         bound_port = ipv6_addr->sin6_port;
@@ -118,6 +120,7 @@ int server_accept(int server_fd) {
         struct sockaddr_in* ipv4_addr = (struct sockaddr_in*)&client_sockaddr;
         inet_ntop(AF_INET, &ipv4_addr->sin_addr, client_addr, client_addr_len);
     } else {
+        assert(client_sockaddr.ss_family == AF_INET6);
         struct sockaddr_in6* ipv6_addr = (struct sockaddr_in6*)&client_sockaddr;
         inet_ntop(AF_INET6, &ipv6_addr->sin6_addr, client_addr,
                 client_addr_len);
