@@ -41,15 +41,16 @@ const uint16_t DEFAULT_PORT_NUMBER = 4004;
         exit(EXIT_FAILURE); \
     }
 
-bool caught_sigint = false;
+bool should_exit = false;
 
 void sig_handler(int signum) {
-    if (signum == SIGINT) {
-        caught_sigint = true;
+    switch (signum) {
+        case SIGINT:
+        case SIGTERM:
+            should_exit = true;
+            break;
     }
-    LOG(INFO, "closing");
 }
-
 
 int install_signal_handlers() {
     static struct sigaction sa = {
@@ -218,12 +219,9 @@ int main(int argc, char* argv[]) {
     }
 
     struct client_info client;
-    while ((server_accept(&server, &client)) != -1) {
+    while (!should_exit && server_accept(&server, &client) != -1) {
         LOG(NOTICE, "accepted connection from %s", client.cl_addr);
         handle_client(&client, &device);
-        if (caught_sigint) {
-            break;
-        }
     }
 
     server_close(&server);
