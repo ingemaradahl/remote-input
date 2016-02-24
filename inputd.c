@@ -31,10 +31,9 @@
 #include "server.h"
 #include "shared.h"
 
-const char const INPUT_DEVICE_NAME[] = "remote-input";
+#define INPUT_DEVICE_NAME "remote-input"
 
-const uint16_t DEFAULT_PORT_NUMBER = 4004;
-
+#define DEFAULT_PORT_NUMBER 4004
 
 #define FATAL_ERRNO(format) { \
         LOG_ERRNO(format); \
@@ -42,6 +41,20 @@ const uint16_t DEFAULT_PORT_NUMBER = 4004;
     }
 
 bool should_exit = false;
+
+struct args {
+    bool dont_daemonize;
+    int verbosity;
+    uint16_t local_port;
+    char* local_host;
+};
+
+const struct args argument_defaults = {
+    .dont_daemonize = false,
+    .verbosity = LOG_NOTICE,
+    .local_port = DEFAULT_PORT_NUMBER,
+    .local_host = NULL
+};
 
 void sig_handler(int signum) {
     switch (signum) {
@@ -147,11 +160,8 @@ void usage(const char* program_name) {
             , DEFAULT_PORT_NUMBER);
 }
 
-int main(int argc, char* argv[]) {
-    bool dont_daemonize = false;
-    int verbosity = LOG_NOTICE;
-    uint16_t local_port = DEFAULT_PORT_NUMBER;
-    char* local_host = NULL;
+struct args parse_args(int argc, char* argv[]) {
+    struct args args = argument_defaults;
 
     struct option const long_options[] = {
         {"help", no_argument, NULL, 'h'},
@@ -163,15 +173,15 @@ int main(int argc, char* argv[]) {
     while ((ch = getopt_long(argc, argv, "dvhlp:", long_options, NULL)) > 0) {
         switch (ch) {
             case 'd':
-                dont_daemonize = true;
+                args.dont_daemonize = true;
                 break;
             case 'v':
-                if (verbosity < LOG_DEBUG) {
-                    verbosity++;
+                if (args.verbosity < LOG_DEBUG) {
+                    args.verbosity++;
                 }
                 break;
             case 'l':
-                local_host = optarg;
+                args.local_host = optarg;
                 break;
             case 'p':
                 {
@@ -180,7 +190,7 @@ int main(int argc, char* argv[]) {
                         LOG(ERROR, "bad port number: %s", optarg);
                         exit(EXIT_FAILURE);
                     }
-                    local_port = (uint16_t) port;
+                    args.local_port = (uint16_t) port;
                 }
                 break;
             case 'h':
@@ -192,7 +202,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    log_set_level(verbosity);
+    return args;
+}
+
+int main(int argc, char* argv[]) {
+    struct args args = parse_args(argc, argv);
+
+    log_set_level(args.verbosity);
 
     struct input_device device;
     if (device_create(INPUT_DEVICE_NAME, &device) < 0) {
@@ -200,11 +216,10 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-
     install_signal_handlers();
 
     struct server_info server;
-    if (server_create(local_host, local_port, &server) < 0) {
+    if (server_create(args.local_host, args.local_port, &server) < 0) {
         exit(EXIT_FAILURE);
     }
 
@@ -214,7 +229,7 @@ int main(int argc, char* argv[]) {
     drop_privileges();
 
     /* Wait until after server creation, making sure errors are obvious */
-    if (!dont_daemonize) {
+    if (!args.dont_daemonize) {
         daemonize();
     }
 
