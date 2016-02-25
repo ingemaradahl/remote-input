@@ -186,7 +186,7 @@ struct args parse_args(int argc, char* argv[]) {
             case 'p':
                 {
                     int port = strtol(optarg, NULL, 10);
-                    if (port < 1) {
+                    if (port < 1 || port > UINT16_MAX) {
                         LOG(ERROR, "bad port number: %s", optarg);
                         exit(EXIT_FAILURE);
                     }
