@@ -109,7 +109,7 @@ void drop_privileges() {
     }
 }
 
-void handle_event(device_t* device, struct client_event* event) {
+void handle_event(struct input_device* device, struct client_event* event) {
     switch (event->type) {
         case EV_MOUSE_DX:
             device_mouse_move(device, event->value, 0);
@@ -134,7 +134,7 @@ void handle_event(device_t* device, struct client_event* event) {
     }
 }
 
-void handle_client(struct client_info* client, device_t* device) {
+void handle_client(struct client_info* client, struct input_device* device) {
     struct client_event event;
 
     while (read_client_event(client, &event) > 0) {

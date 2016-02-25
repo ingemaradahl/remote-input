@@ -170,7 +170,7 @@ exit:
 }
 #endif
 
-int device_create(const char* device_name, device_t* device) {
+int device_create(const char* device_name, struct input_device* device) {
     device->uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     if (device->uinput_fd < 0) {
         if (errno == ENOENT) {
@@ -254,7 +254,7 @@ error:
     return -1;
 }
 
-void device_release_all_keys(device_t* device) {
+void device_release_all_keys(struct input_device* device) {
     if (device->event_fd < 0) return;
 
     uint8_t keys[(KEY_MAX + (8 - 1)) / 8] = {0};
@@ -274,7 +274,7 @@ void device_release_all_keys(device_t* device) {
     }
 }
 
-void device_close(device_t* device) {
+void device_close(struct input_device* device) {
     device_release_all_keys(device);
 
     if (device->event_fd > 0 && close(device->event_fd < 0)) {
@@ -293,14 +293,14 @@ void device_close(device_t* device) {
     device->uinput_fd = -1;
 }
 
-void commit_event(device_t* device, struct input_event* event) {
+void commit_event(struct input_device* device, struct input_event* event) {
     gettimeofday(&event->time, NULL);
     if (write(device->uinput_fd, event, sizeof(struct input_event)) < 0) {
         LOG_ERRNO("error commiting event");
     }
 }
 
-void sync_device(device_t* device) {
+void sync_device(struct input_device* device) {
     static struct input_event sync_event = {
         .type = EV_SYN,
         .code = SYN_REPORT
@@ -309,7 +309,7 @@ void sync_device(device_t* device) {
     commit_event(device, &sync_event);
 }
 
-void mouse_event(device_t* device, uint16_t event_code_x,
+void mouse_event(struct input_device* device, uint16_t event_code_x,
         uint16_t event_code_y, int dx, int dy) {
     bool has_written = 0;
     struct input_event event = {
@@ -335,17 +335,18 @@ void mouse_event(device_t* device, uint16_t event_code_x,
     }
 }
 
-void device_mouse_move(device_t* device, int dx, int dy) {
+void device_mouse_move(struct input_device* device, int dx, int dy) {
     LOG(DEBUG, "MOUSE MOVE [%d,%d]", dx, dy);
     mouse_event(device, REL_X, REL_Y, dx, dy);
 }
 
-void device_mouse_wheel(device_t* device, int dx, int dy) {
+void device_mouse_wheel(struct input_device* device, int dx, int dy) {
     LOG(DEBUG, "MOUSE WHEEL [%d,%d]", dx, dy);
     mouse_event(device, REL_HWHEEL, REL_WHEEL, dx, dy);
 }
 
-void device_key_event(device_t* device, uint16_t keycode, int32_t value) {
+void device_key_event(struct input_device* device, uint16_t keycode,
+        int32_t value) {
     struct input_event event = {
         .type = EV_KEY,
         .code = keycode,
@@ -355,12 +356,12 @@ void device_key_event(device_t* device, uint16_t keycode, int32_t value) {
     sync_device(device);
 }
 
-void device_key_down(device_t* device, uint16_t keycode) {
+void device_key_down(struct input_device* device, uint16_t keycode) {
     LOG(DEBUG, "KEY DOWN [%d]", keycode);
     device_key_event(device, keycode, BUTTON_PRESS);
 }
 
-void device_key_up(device_t* device, uint16_t keycode) {
+void device_key_up(struct input_device* device, uint16_t keycode) {
     LOG(DEBUG, "KEY UP [%d]", keycode);
     device_key_event(device, keycode, BUTTON_RELEASE);
 }

@@ -21,23 +21,23 @@
 
 #include <stdint.h>
 
-typedef struct input_device {
+struct input_device {
     int uinput_fd;
     int event_fd;
-} device_t;
+};
 
-int device_create(const char* device_name, device_t* device);
+int device_create(const char* device_name, struct input_device* device);
 
-void device_close(device_t* device);
+void device_close(struct input_device* device);
 
-void device_mouse_move(device_t*, int dx, int dy);
+void device_mouse_move(struct input_device*, int dx, int dy);
 
-void device_mouse_wheel(device_t*, int dx, int dy);
+void device_mouse_wheel(struct input_device*, int dx, int dy);
 
-void device_key_down(device_t*, uint16_t keycode);
+void device_key_down(struct input_device*, uint16_t keycode);
 
-void device_key_up(device_t*, uint16_t keycode);
+void device_key_up(struct input_device*, uint16_t keycode);
 
-void device_release_all_keys(device_t* device);
+void device_release_all_keys(struct input_device* device);
 
 #endif /* _INPUT_DEVICE_H_ */
