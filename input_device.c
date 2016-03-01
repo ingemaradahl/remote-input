@@ -189,6 +189,12 @@ int device_create(const char* device_name, struct input_device* device) {
     IOCTL(UI_SET_EVBIT, EV_KEY);
 
     for (uint16_t key = KEY_ESC; key < KEY_MAX; key++) {
+#ifdef ANDROID
+        if (key == BTN_TOUCH) {
+            /* BTN_TOUCH has been known to cause trouble on some devices */
+            continue;
+        }
+#endif
         IOCTL(UI_SET_KEYBIT, key);
     }
 
