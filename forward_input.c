@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with remote-input.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -30,6 +31,7 @@
 #include "keysym_to_linux_code.h"
 #include "shared.h"
 
+#define DEFAULT_SERVER_PORT_STR "4004"
 
 /*
  * TODO: SIGPIPE when remote closed
@@ -43,16 +45,18 @@ int g_original_pointer_y;
 int g_reset_pointer_x;
 int g_reset_pointer_y;
 
-int verbose = 0;
-
 unsigned int abort_mask = ShiftMask | ControlMask;
+struct args {
+    bool verbose;
+    char* server_host;
+    char* server_port;
+};
 
-void usage(const char* program_name) {
-    printf("Usage: %s [OPTION] HOSTNAME [PORT]\n", program_name);
-    puts("\nOptions:\n"
-            "  -v  --verbose    write emitted events to stdout\n"
-            "  -h  --help       show this help text and exit");
-}
+const struct args argument_defaults = {
+    .verbose = false,
+    .server_host = NULL,
+    .server_port = DEFAULT_SERVER_PORT_STR
+};
 
 void get_screen_size(Display* display, int* ret_w, int* ret_h) {
     Window root_window = DefaultRootWindow(display);
@@ -191,7 +195,8 @@ int is_quit_combination(Display* display, XKeyEvent* event) {
     return keysym == XK_Tab && (event->state & abort_mask) == abort_mask;
 }
 
-void forward_key_button_event(Display* display, XEvent* event, int connection) {
+void forward_key_button_event(Display* display, XEvent* event, int connection,
+        bool verbose) {
     struct client_event cl_event;
 
     switch (event->type) {
@@ -264,12 +269,21 @@ void forward_key_button_event(Display* display, XEvent* event, int connection) {
     write(connection, &cl_event, sizeof(cl_event));
 }
 
-int main(int argc, char* argv[]) {
+void usage(const char* program_name) {
+    printf("Usage: %s [OPTION] HOSTNAME [PORT]\n", program_name);
+    puts("\nOptions:\n"
+            "  -v  --verbose    write emitted events to stdout\n"
+            "  -h  --help       show this help text and exit");
+}
+
+struct args parse_args(int argc, char* argv[]) {
+    struct args args = argument_defaults;
+
     int option;
     while ((option = getopt(argc, argv, "vh")) > 0) {
         switch (option) {
             case 'v':
-                verbose = 1;
+                args.verbose = 1;
                 break;
             case 'h':
                 usage(argv[0]);
@@ -290,11 +304,17 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    char* server_host = argv[optind++];
-    char* server_port = "4004";
+    args.server_host = argv[optind++];
+
     if (argc > optind) {
-        server_port = argv[optind];
+        args.server_port = argv[optind];
     }
+
+    return args;
+}
+
+int main(int argc, char* argv[]) {
+    struct args args = parse_args(argc, argv);
 
     Display* display = XOpenDisplay(NULL);
 
@@ -303,7 +323,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int connection = connect_to_server(server_host, server_port);
+    int connection = connect_to_server(args.server_host, args.server_port);
     if (connection < 0) {
         perror("error connecting to server");
         exit(EXIT_FAILURE);
@@ -332,7 +352,7 @@ int main(int argc, char* argv[]) {
                 if (consume_autorepeat_event(display, &e)) {
                     break;
                 }
-                forward_key_button_event(display, &e, connection);
+                forward_key_button_event(display, &e, connection, args.verbose);
                 break;
             case MotionNotify:
                 {
