@@ -30,6 +30,7 @@
 #include "logging.h"
 #include "server.h"
 #include "shared.h"
+#include "out/gen/keymap.h"
 
 #define INPUT_DEVICE_NAME "remote-input"
 
@@ -118,10 +119,10 @@ void handle_event(struct input_device* device, struct client_event* event) {
             device_mouse_move(device, 0, event->value);
             break;
         case EV_KEY_DOWN:
-            device_key_down(device, event->value);
+            device_key_down(device, lookup_keycode(event->value));
             break;
         case EV_KEY_UP:
-            device_key_up(device, event->value);
+            device_key_up(device, lookup_keycode(event->value));
             break;
         case EV_WHEEL:
             device_mouse_wheel(device, 0, event->value);

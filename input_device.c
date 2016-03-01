@@ -188,19 +188,7 @@ int device_create(const char* device_name, struct input_device* device) {
     IOCTL_BIND(device->uinput_fd, "error setting up device", error);
     IOCTL(UI_SET_EVBIT, EV_KEY);
 
-    IOCTL(UI_SET_KEYBIT, BTN_LEFT);
-    IOCTL(UI_SET_KEYBIT, BTN_RIGHT);
-    IOCTL(UI_SET_KEYBIT, BTN_MIDDLE);
-
-    // TODO: Maybe go beyound KEY_KPDOT?
-    // I saw somewhere[0] that an example was to press the KEY_HOMEPAGE as an
-    // experiment. Could it be that Android will listen to KEY_HOMEPAGE instead
-    // of KEY_HOME to go to the homescreen? How will that work? The emulator
-    // will go to the homescreen on the keypad home key, but the linux/input.h
-    // does not make any difference of keypad home/regular home.
-    //
-    // [0] http://newandroidbook.com/Book/Input.html?r#InputStack
-    for (uint16_t key = KEY_ESC; key < KEY_KPDOT; key++) {
+    for (uint16_t key = KEY_ESC; key < KEY_MAX; key++) {
         IOCTL(UI_SET_KEYBIT, key);
     }
 

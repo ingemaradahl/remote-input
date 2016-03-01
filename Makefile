@@ -1,18 +1,22 @@
 APP := inputd
 
+SHELL=bash -o pipefail
+
 all: $(APP)
 
 OUT = out
 DEPDIR := $(OUT)/deps
+GENDIR := $(OUT)/gen
 
-DIRECTORIES = $(OUT) $(DEPDIR)
+DIRECTORIES = $(OUT) $(DEPDIR) $(GENDIR)
 $(DIRECTORIES):
 	mkdir -p $@
 
 CC := gcc
 DEPFLAGS = -MMD -MP -MF $(DEPDIR)/$*.Td
-CFLAGS = $(DEPFLAGS) -c -std=c11 -Wall -Og -g -D_XOPEN_SOURCE=700
+CFLAGS = $(DEPFLAGS) -c -std=c11 -Wall -Og -g
 CFLAGS += -Werror=format-security -Wshadow
+CPPFLAGS = -D_XOPEN_SOURCE=700
 
 SRCS = inputd.c logging.c input_device.c server.c
 
@@ -33,9 +37,11 @@ CFLAGS += -fpic -ffunction-sections -funwind-tables
 CFLAGS += -fstack-protector -no-canonical-prefixes -march=armv7-a
 CFLAGS += -mfpu=vfpv3-d16 -mfloat-abi=softfp -mthumb
 CFLAGS += -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64
-CFLAGS += -DANDROID -Wa,--noexecstack -Wformat
+CFLAGS += -Wa,--noexecstack -Wformat
 CFLAGS += -fPIE -ffunction-sections
 CFLAGS += -funwind-tables -fstack-protector
+
+CPPFLAGS += -DANDROID
 
 LDFLAGS = --sysroot=$(SYSROOT)
 LDFLAGS += -lgcc -lc -llog -lm -march=armv7-a
@@ -47,10 +53,14 @@ LDFLAGS += -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack
 LDFLAGS += -Wl,-z,relro -Wl,-z,now -fPIE -pie -mthumb
 endif
 
+$(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk | $(GENDIR)
+	cpp $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | ./generate_keymap.awk > $@
+
+$(OUT)/inputd.o: $(OUT)/gen/keymap.h
 
 $(OUT)/%.o: %.c | $(OUT)
 $(OUT)/%.o: %.c $(DEPDIR)/%.d | $(DEPDIR)
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
 	mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 $(DEPDIR)/%.d: ;
