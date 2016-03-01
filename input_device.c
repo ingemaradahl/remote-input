@@ -303,7 +303,7 @@ void sync_device(struct input_device* device) {
     commit_event(device, &sync_event);
 }
 
-void mouse_event(struct input_device* device, uint16_t event_code_x,
+void commit_mouse_event(struct input_device* device, uint16_t event_code_x,
         uint16_t event_code_y, int dx, int dy) {
     bool has_written = 0;
     struct input_event event = {
@@ -331,15 +331,15 @@ void mouse_event(struct input_device* device, uint16_t event_code_x,
 
 void device_mouse_move(struct input_device* device, int dx, int dy) {
     LOG(DEBUG, "MOUSE MOVE [%d,%d]", dx, dy);
-    mouse_event(device, REL_X, REL_Y, dx, dy);
+    commit_mouse_event(device, REL_X, REL_Y, dx, dy);
 }
 
 void device_mouse_wheel(struct input_device* device, int dx, int dy) {
     LOG(DEBUG, "MOUSE WHEEL [%d,%d]", dx, dy);
-    mouse_event(device, REL_HWHEEL, REL_WHEEL, dx, dy);
+    commit_mouse_event(device, REL_HWHEEL, REL_WHEEL, dx, dy);
 }
 
-void device_key_event(struct input_device* device, uint16_t keycode,
+void commit_device_key_event(struct input_device* device, uint16_t keycode,
         int32_t value) {
     struct input_event event = {
         .type = EV_KEY,
@@ -352,10 +352,10 @@ void device_key_event(struct input_device* device, uint16_t keycode,
 
 void device_key_down(struct input_device* device, uint16_t keycode) {
     LOG(DEBUG, "KEY DOWN [%d]", keycode);
-    device_key_event(device, keycode, BUTTON_PRESS);
+    commit_device_key_event(device, keycode, BUTTON_PRESS);
 }
 
 void device_key_up(struct input_device* device, uint16_t keycode) {
     LOG(DEBUG, "KEY UP [%d]", keycode);
-    device_key_event(device, keycode, BUTTON_RELEASE);
+    commit_device_key_event(device, keycode, BUTTON_RELEASE);
 }
