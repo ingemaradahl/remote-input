@@ -52,12 +52,14 @@ struct pointer_info {
 
 struct args {
     bool verbose;
+    bool quiet;
     char* server_host;
     char* server_port;
 };
 
 const struct args argument_defaults = {
     .verbose = false,
+    .quiet = false,
     .server_host = NULL,
     .server_port = DEFAULT_SERVER_PORT_STR
 };
@@ -245,7 +247,7 @@ bool is_quit_combination(Display* display, XKeyEvent* event) {
 }
 
 void forward_key_button_event(Display* display, XEvent* event, int connection,
-        bool verbose) {
+        bool verbose, bool quiet) {
     struct client_event cl_event;
 
     switch (event->type) {
@@ -270,9 +272,10 @@ void forward_key_button_event(Display* display, XEvent* event, int connection,
         cl_event.value = keysym_to_key(keysym);
 
         if (cl_event.value == 0) {
-            const char* key_string = XKeysymToString(keysym);
-            printf("No known translation for %#lx " "('%s', keycode %#x)\n",
-                    keysym, key_string, keycode);
+            if (!quiet) {
+                printf("No known translation for %#lx " "('%s', keycode %#x)\n",
+                        keysym, XKeysymToString(keysym), keycode);
+            }
             return;
         }
 
@@ -322,17 +325,31 @@ void usage(const char* program_name) {
     printf("Usage: %s [OPTION] HOSTNAME [PORT]\n", program_name);
     puts("\nOptions:\n"
             "  -v  --verbose    write emitted events to stdout\n"
+            "  -q  --quiet      suppress informative messages\n"
             "  -h  --help       show this help text and exit");
 }
 
 struct args parse_args(int argc, char* argv[]) {
     struct args args = argument_defaults;
 
+    struct option const long_options[] = {
+        {"verbose", no_argument, NULL, 'v'},
+        {"quiet", no_argument, NULL, 'q'},
+        {"help", no_argument, NULL, 'h'},
+        {NULL, 0, NULL, 0}
+
+    };
+
     char option;
-    while ((option = getopt(argc, argv, "vh")) > 0) {
+    while ((option = getopt_long(argc, argv, "vqh", long_options, NULL)) > 0) {
         switch (option) {
             case 'v':
                 args.verbose = 1;
+                args.quiet = 0;
+                break;
+            case 'q':
+                args.verbose = 0;
+                args.quiet = 1;
                 break;
             case 'h':
                 usage(argv[0]);
@@ -391,7 +408,10 @@ int main(int argc, char* argv[]) {
 
     flush_events(display);
 
-    printf("Forwarding input to %s, press Ctrl-Shift-Tab to quit\n", argv[1]);
+    if (!args.quiet) {
+        printf("Forwarding input to %s, press Ctrl-Shift-Tab to quit\n",
+                argv[1]);
+    }
 
     bool quit = false;
     XEvent e;
@@ -409,7 +429,8 @@ int main(int argc, char* argv[]) {
                 if (consume_autorepeat_event(display, &e)) {
                     break;
                 }
-                forward_key_button_event(display, &e, connection, args.verbose);
+                forward_key_button_event(display, &e, connection, args.verbose,
+                        args.quiet);
                 break;
             case MotionNotify:
                 {
