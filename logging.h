@@ -59,8 +59,14 @@ void __log_errno(const char* file, int line, const char* format, ...);
     __log_function(LOG_NOTICE, format, ## __VA_ARGS__)
 #define __LOG_INFO(format, ...) \
     __log_function(LOG_INFO, format, ## __VA_ARGS__)
+
+#ifndef NDEBUG
 #define __LOG_DEBUG(format, ...) \
-    __log_function(LOG_DEBUG, "%s:%d: " format, __FILE__, __LINE__, ## __VA_ARGS__)
+    __log_function(LOG_DEBUG, "%s:%d: " format, __FILE__, \
+            __LINE__, ## __VA_ARGS__)
+#else
+#define __LOG_DEBUG(format, ...)
+#endif
 
 #define LOG(priority, format, ...) __LOG_##priority(format, ## __VA_ARGS__)
 #define LOG_ERRNO(format, ...) __log_errno(NULL, -1, format, ## __VA_ARGS__)
