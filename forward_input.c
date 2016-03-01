@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <netdb.h>
@@ -33,9 +34,10 @@
 
 #define DEFAULT_SERVER_PORT_STR "4004"
 
+const uint32_t abort_mask = ShiftMask | ControlMask;
+
 /*
  * TODO: SIGPIPE when remote closed
- * TODO: Ungrab pointer/keyboard on signals (SIGSEGV)
  */
 
 struct point {
@@ -48,7 +50,6 @@ struct pointer_info {
     struct point reset_position;
 };
 
-unsigned int abort_mask = ShiftMask | ControlMask;
 struct args {
     bool verbose;
     char* server_host;
@@ -61,7 +62,7 @@ const struct args argument_defaults = {
     .server_port = DEFAULT_SERVER_PORT_STR
 };
 
-void get_screen_size(Display* display, int* ret_w, int* ret_h) {
+void get_screen_size(Display* display, uint16_t* ret_w, uint16_t* ret_h) {
     Window root_window = DefaultRootWindow(display);
 
     XWindowAttributes attributes;
@@ -159,7 +160,7 @@ int32_t lock_pointer(Display* display, struct pointer_info* pointer_info) {
         return grab_result;
     }
 
-    int screen_width, screen_height;
+    uint16_t screen_width, screen_height;
     get_screen_size(display, &screen_width, &screen_height);
 
     /* Reset the pointer to the center of the screen to avoid edge conflicts */
@@ -181,7 +182,7 @@ void release_pointer(Display* display, struct point* original_position) {
     XUngrabPointer(display, CurrentTime);
 }
 
-int consume_autorepeat_event(Display* display, XEvent* event) {
+bool consume_autorepeat_event(Display* display, XEvent* event) {
     if (XEventsQueued(display, QueuedAfterReading)) {
         XEvent next_event;
         XPeekEvent(display, &next_event);
@@ -190,11 +191,11 @@ int consume_autorepeat_event(Display* display, XEvent* event) {
                 next_event.xkey.time == event->xkey.time &&
                 next_event.xkey.keycode == event->xkey.keycode) {
             XNextEvent(display, event);
-            return 1;
+            return true;
         }
     }
 
-    return 0;
+    return false;
 }
 
 int connect_to_server(const char* host, const char* service) {
@@ -238,7 +239,7 @@ void flush_events(Display* display) {
     while (XPending(display)) XNextEvent(display, &e);
 }
 
-int is_quit_combination(Display* display, XKeyEvent* event) {
+bool is_quit_combination(Display* display, XKeyEvent* event) {
     KeySym keysym = XkbKeycodeToKeysym(display, event->keycode, 0, 0);
     return keysym == XK_Tab && (event->state & abort_mask) == abort_mask;
 }
@@ -264,7 +265,7 @@ void forward_key_button_event(Display* display, XEvent* event, int connection,
         XKeyEvent* key_event = (XKeyEvent*)event;
 
         // TODO: Add option to get the "raw" keysym (no layout)
-        unsigned int keycode = key_event->keycode;
+        uint32_t keycode = key_event->keycode;
         KeySym keysym = XkbKeycodeToKeysym(display, keycode, 0, 0);
         cl_event.value = keysym_to_key(keysym);
 
@@ -283,7 +284,7 @@ void forward_key_button_event(Display* display, XEvent* event, int connection,
     } else {
         XButtonEvent* button_event = (XButtonEvent*)event;
 
-        unsigned int button = button_event->button;
+        uint32_t button = button_event->button;
 
         /* Linux handles mouse wheels as relative events */
         if (button > 3 && button < 8) {
@@ -327,7 +328,7 @@ void usage(const char* program_name) {
 struct args parse_args(int argc, char* argv[]) {
     struct args args = argument_defaults;
 
-    int option;
+    char option;
     while ((option = getopt(argc, argv, "vh")) > 0) {
         switch (option) {
             case 'v':
@@ -392,14 +393,14 @@ int main(int argc, char* argv[]) {
 
     printf("Forwarding input to %s, press Ctrl-Shift-Tab to quit\n", argv[1]);
 
-    int quit = 0;
+    bool quit = false;
     XEvent e;
     while (!quit) {
         XNextEvent(display, &e);
         switch (e.type) {
             case KeyPress:
                 if (is_quit_combination(display, (XKeyEvent*)&e)) {
-                    quit =~ 0;
+                    quit = true;
                     break;
                 }
             case KeyRelease:
@@ -419,8 +420,10 @@ int main(int argc, char* argv[]) {
                     }
 
                     struct client_event event;
-                    int dx = pointer_event->x - pointer_info.reset_position.x;
-                    int dy = pointer_event->y - pointer_info.reset_position.y;
+                    int16_t dx =
+                        pointer_event->x - pointer_info.reset_position.x;
+                    int16_t dy =
+                        pointer_event->y - pointer_info.reset_position.y;
 
                     if (dx != 0) {
                         event.type = EV_MOUSE_DX;
