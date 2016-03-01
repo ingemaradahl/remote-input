@@ -37,7 +37,7 @@ SYSROOT := $(ANDROID_NDK)/platforms/android-$(PLATFORM_TARGET_VERSION)/arch-$(PL
 CC := $(TOOLCHAIN)/bin/arm-linux-androideabi-gcc
 
 CFLAGS += -I$(SYSROOT)/usr/include
-CFLAGS += -fdiagnostics-color=always
+CFLAGS += -fdiagnostics-color=auto
 CFLAGS += -fpic -ffunction-sections -funwind-tables
 CFLAGS += -fstack-protector -no-canonical-prefixes -march=armv7-a
 CFLAGS += -mfpu=vfpv3-d16 -mfloat-abi=softfp -mthumb
