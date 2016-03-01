@@ -21,6 +21,11 @@ CPPFLAGS = -D_XOPEN_SOURCE=700
 SRCS = inputd.c logging.c input_device.c server.c
 
 ifeq ($(TARGET), ANDROID)
+
+ifndef ANDROID_NDK
+$(error $$ANDROID_NDK not set! Please install the Android ndk)
+endif
+
 GCC_VERSION := 4.9
 
 PLATFORM_TARGET_VERSION=21
