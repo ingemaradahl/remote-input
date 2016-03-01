@@ -15,7 +15,7 @@ $(DIRECTORIES):
 CC := gcc
 DEPFLAGS = -MMD -MP -MF $(DEPDIR)/$*.Td
 CFLAGS = $(DEPFLAGS) -c -std=c11 -Wall -Og -g
-CFLAGS += -Werror=format-security -Wshadow
+CFLAGS += -Werror=format-security -Wshadow -Wformat
 CPPFLAGS = -D_XOPEN_SOURCE=700
 
 SRCS = inputd.c logging.c input_device.c server.c
@@ -37,7 +37,7 @@ CFLAGS += -fpic -ffunction-sections -funwind-tables
 CFLAGS += -fstack-protector -no-canonical-prefixes -march=armv7-a
 CFLAGS += -mfpu=vfpv3-d16 -mfloat-abi=softfp -mthumb
 CFLAGS += -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64
-CFLAGS += -Wa,--noexecstack -Wformat
+CFLAGS += -Wa,--noexecstack
 CFLAGS += -fPIE -ffunction-sections
 CFLAGS += -funwind-tables -fstack-protector
 
