@@ -13,8 +13,7 @@ $(DIRECTORIES):
 	mkdir -p $@
 
 CC := gcc
-DEPFLAGS = -MMD -MP -MF $(DEPDIR)/$*.Td
-CFLAGS = $(DEPFLAGS) -c -std=c11 -Wall -Og -g
+CFLAGS = -std=c11 -Wall -Og -g
 CFLAGS += -Werror=format-security -Wshadow -Wformat
 CPPFLAGS = -D_XOPEN_SOURCE=700
 
@@ -56,20 +55,18 @@ LDFLAGS += -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack
 LDFLAGS += -Wl,-z,relro -Wl,-z,now
 endif  # TARGET == ANDROID
 
+DEPS = $(patsubst %, $(DEPDIR)/%.d, $(basename $(SRCS)))
+
+$(DEPDIR)/%.d: %.c | $(DEPDIR)
+	$(CC) $(CFLAGS) -MG -MM -MP -MT $@ -MT $(OUT)/$(<:.c=.o) -MF $@ $<
+
+-include $(DEPS)
+
 $(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk | $(GENDIR)
 	cpp $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | ./generate_keymap.awk > $@
 
-$(OUT)/inputd.o: $(OUT)/gen/keymap.h
-
 $(OUT)/%.o: %.c | $(OUT)
-$(OUT)/%.o: %.c $(DEPDIR)/%.d | $(DEPDIR)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
-	mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
-
-$(DEPDIR)/%.d: ;
-.PRECIOUS: $(DEPDIR)/%.d
-
--include $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS)))
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 $(APP): $(patsubst %,$(OUT)/%.o, $(basename $(SRCS)))
 	$(CC) $(LDFLAGS) -o $@ $^
