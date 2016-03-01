@@ -68,10 +68,28 @@ void get_screen_size(Display* display, int* ret_w, int* ret_h) {
     *ret_h = attributes.height;
 }
 
-void lock_keyboard(Display* display) {
+int32_t grab_root_window_keyboard(Display* display) {
     Window root_window = DefaultRootWindow(display);
-    XGrabKeyboard(display, root_window, True /* owner_events */,
-           GrabModeAsync, GrabModeAsync, CurrentTime);
+    return XGrabKeyboard(display, root_window, True /* owner_events */,
+            GrabModeAsync, GrabModeAsync, CurrentTime);
+}
+
+int32_t lock_keyboard(Display* display) {
+    int32_t grab_result;
+    if ((grab_result = grab_root_window_keyboard(display)) == AlreadyGrabbed) {
+        /* The program might have been invoked from a grabbing client, such as
+         * xbindkeys. Wait for it to ungrab the keyboard, which generates a
+         * FocusOut event.
+         */
+        XSelectInput(display, DefaultRootWindow(display), FocusChangeMask);
+
+        XEvent focus_change_event;
+        XMaskEvent(display, FocusChangeMask, &focus_change_event);
+
+        return grab_root_window_keyboard(display);
+    }
+
+    return grab_result;
 }
 
 void release_keyboard(Display* display) {
@@ -83,7 +101,43 @@ void reset_pointer(Display* display) {
             g_reset_pointer_x, g_reset_pointer_y);
 }
 
-void lock_pointer(Display* display) {
+int32_t grab_and_hide_root_window_pointer(Display* display) {
+    Window root_window = DefaultRootWindow(display);
+
+    /* Replace the cursor with an invisible bitmap to "hide" it */
+    static char cursor_pixmap_bits[] = {0};
+    Pixmap cursor_pixmap = XCreateBitmapFromData(display, root_window,
+            cursor_pixmap_bits, 1, 1);
+
+    XColor xcolor;
+    Cursor cursor = XCreatePixmapCursor(display, cursor_pixmap, cursor_pixmap,
+            &xcolor, &xcolor, 1, 1);
+
+    uint32_t pointer_event_mask =
+        PointerMotionMask | ButtonPressMask | ButtonReleaseMask;
+
+    int32_t grab_result =XGrabPointer(display, root_window, True,
+            pointer_event_mask, GrabModeAsync, GrabModeAsync, root_window,
+            cursor, CurrentTime);
+    if (grab_result != GrabSuccess) {
+        if (grab_result == AlreadyGrabbed) {
+            /* Similarly to keyboard grabbing above, wait for the pointer to be
+             * ungrabbed before trying to grab it */
+            XSelectInput(display, DefaultRootWindow(display), LeaveWindowMask);
+
+            XEvent leave_event;
+            XMaskEvent(display, LeaveWindowMask, &leave_event);
+
+            grab_result = XGrabPointer(display, root_window, True,
+                    pointer_event_mask, GrabModeAsync, GrabModeAsync,
+                    root_window, cursor, CurrentTime);
+        }
+    }
+
+    return grab_result;
+}
+
+int32_t lock_pointer(Display* display) {
     Window root_window = DefaultRootWindow(display);
 
     Window pointer_root_w, pointer_child_w;
@@ -97,22 +151,10 @@ void lock_pointer(Display* display) {
     g_original_pointer_x = root_x;
     g_original_pointer_y = root_y;
 
-
-    /* Replace with an invisible cursor to "hide" it */
-    static char cursor_pixmap_bits[] = {0};
-    Pixmap cursor_pixmap = XCreateBitmapFromData(display, root_window,
-            cursor_pixmap_bits, 1, 1);
-
-    XColor xcolor;
-    Cursor cursor = XCreatePixmapCursor(display, cursor_pixmap, cursor_pixmap,
-            &xcolor, &xcolor, 1, 1);
-
-
-    unsigned int pointer_events =
-        PointerMotionMask | ButtonPressMask | ButtonReleaseMask;
-    XGrabPointer(display, root_window, True, pointer_events, GrabModeAsync,
-            GrabModeAsync, root_window, cursor, CurrentTime);
-
+    int32_t grab_result = grab_and_hide_root_window_pointer(display);
+    if (grab_result != GrabSuccess) {
+        return grab_result;
+    }
 
     int screen_width, screen_height;
     get_screen_size(display, &screen_width, &screen_height);
@@ -122,6 +164,8 @@ void lock_pointer(Display* display) {
     g_reset_pointer_y = screen_height / 2;
 
     reset_pointer(display);
+
+    return grab_result;
 }
 
 void release_pointer(Display* display) {
@@ -329,8 +373,15 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    lock_keyboard(display);
-    lock_pointer(display);
+    if (lock_keyboard(display) != GrabSuccess) {
+        fprintf(stderr, "Couldn't grab keyboard!");
+        exit(EXIT_FAILURE);
+    }
+
+    if (lock_pointer(display) != GrabSuccess) {
+        fprintf(stderr, "Couldn't grab pointer!");
+        exit(EXIT_FAILURE);
+    }
 
     flush_events(display);
 
