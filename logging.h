@@ -22,7 +22,13 @@
 #include <stddef.h>
 #include <syslog.h>
 
-#include "defs.h"
+#ifdef __GNUC__
+#define __notnull(args) __attribute__((__nonnull__ args))
+#define PRINTF_TYPE(x, y) \
+    __attribute__((__format__(__printf__, x, y))) __notnull((x))
+#else
+#define PRINTF_TYPE(X, y)
+#endif
 
 void log_init();
 
