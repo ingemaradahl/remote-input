@@ -43,15 +43,13 @@ CFLAGS += -funwind-tables -fstack-protector
 
 CPPFLAGS += -DANDROID
 
-LDFLAGS = --sysroot=$(SYSROOT)
-LDFLAGS += -lgcc -lc -llog -lm -march=armv7-a
-LDPLAGS += -L$(SYSROOT)/usr/lib
-LDFLAGS += -Wl,-rpath-link=$(SYSROOT)/usr/lib
-LDFLAGS += -Wl,-rpath-link=$(OUT)
+LDFLAGS = -march=armv7-a -fPIE -pie -mthumb
+LDFLAGS += --sysroot=$(SYSROOT) -L$(SYSROOT)/usr/lib
+LDFLAGS += -Wl,-rpath-link=$(SYSROOT)/usr/lib -Wl,-rpath-link=$(OUT)
 LDFLAGS += -Wl,--gc-sections -Wl,-z,nocopyreloc -no-canonical-prefixes
 LDFLAGS += -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack
-LDFLAGS += -Wl,-z,relro -Wl,-z,now -fPIE -pie -mthumb
-endif
+LDFLAGS += -Wl,-z,relro -Wl,-z,now
+endif  # TARGET == ANDROID
 
 $(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk | $(GENDIR)
 	cpp $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | ./generate_keymap.awk > $@
