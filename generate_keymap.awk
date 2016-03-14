@@ -3,14 +3,14 @@
 BEGIN {
     first_entry = -1;
 
-    print "/* THIS FILE IS GENERATED. DO NOT EDIT! */\n";
-    print "#include <stdint.h>\n";
-    print "uint16_t lookup_keycode(uint16_t keycode) {";
+    print "/* THIS FILE IS GENERATED. DO NOT EDIT! */\n"
+    print "#include <stdint.h>\n"
+    print "uint16_t lookup_keycode(uint16_t keycode) {"
 }
 
 /^\s*[0-9]+\s+[0-9]+\s*$/ {
     if (first_entry == -1) {
-        print "    static const uint16_t keymap[] = {";
+        print "    static const uint16_t keymap[] = {"
         printf("          %d\n", $2);
         first_entry = $1;
         previous_entry = first_entry;
@@ -45,13 +45,13 @@ END {
         exit 0;
     }
 
-    print "    };";
+    print "    };"
     printf("    static const size_t keymap_start = %d;\n", first_entry);
     printf("    static const size_t keymap_end = %d +\n", first_entry);
     print "            sizeof(keymap) / sizeof(keymap[0]);\n"
     print "    if (keycode >= keymap_start && keycode < keymap_end) {"
-    print "        return keymap[keycode - keymap_start];";
-    print "    }\n";
-    print "    return keycode;";
-    print "}";
+    print "        return keymap[keycode - keymap_start];"
+    print "    }\n"
+    print "    return keycode;"
+    print "}"
 }
