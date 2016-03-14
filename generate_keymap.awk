@@ -47,7 +47,7 @@ END {
 
     print "    };";
     printf("    static const size_t keymap_start = %d;\n", first_entry);
-    print "    static const size_t keymap_end = keymap_start +"
+    printf("    static const size_t keymap_end = %d +\n", first_entry);
     print "            sizeof(keymap) / sizeof(keymap[0]);\n"
     print "    if (keycode >= keymap_start && keycode < keymap_end) {"
     print "        return keymap[keycode - keymap_start];";
