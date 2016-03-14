@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+#define sizeof_field(type, field) sizeof(((type*)NULL)->field)
+
 #define EV_DISCONNECT   0
 #define EV_KEY_DOWN     1
 #define EV_KEY_UP       2
@@ -33,5 +35,17 @@ struct client_event {
     uint16_t type;
     int16_t value;
 };
+
+#define EV_MSG_SIZE ( \
+            sizeof_field(struct client_event, type) + \
+            sizeof_field(struct client_event, value) \
+        )
+
+#define _EV_MSG_type_ptr(event_buffer) ((uint16_t*)event_buffer)
+#define _EV_MSG_value_ptr(event_buffer) \
+        ((int16_t*)(((uint8_t*)event_buffer) + \
+            sizeof_field(struct client_event, type)))
+
+#define EV_MSG_FIELD(event_buffer, field) (*_EV_MSG_##field##_ptr(event_buffer))
 
 #endif /* _SHARED_H_ */

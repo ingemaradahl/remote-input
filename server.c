@@ -129,15 +129,20 @@ int server_accept(struct server_info* server, struct client_info* client) {
 }
 
 int read_client_event(struct client_info* client, struct client_event* event) {
-    int read_length = read(client->cl_fd, event, sizeof(struct client_event));
+    uint8_t event_buffer[EV_MSG_SIZE];
+
+    int read_length = read(client->cl_fd, event_buffer, sizeof(event_buffer));
     if (read_length < 0 && errno != EINTR) {
         LOG_ERRNO("error reading from client");
         return -1;
     }
 
-    if (read_length < sizeof(struct client_event)) {
+    if (read_length < sizeof(event_buffer)) {
         return 0;
     }
+
+    event->type = ntohs(EV_MSG_FIELD(event_buffer, type));
+    event->value = ntohs(EV_MSG_FIELD(event_buffer, value));
 
     return read_length;
 }

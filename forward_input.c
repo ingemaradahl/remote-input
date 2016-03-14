@@ -236,6 +236,15 @@ int connect_to_server(const char* host, const char* service) {
     return socket_fd;
 }
 
+void write_client_event(int connection, struct client_event* client_event) {
+    uint8_t event_buffer[EV_MSG_SIZE];
+
+    EV_MSG_FIELD(event_buffer, type) = htons(client_event->type);
+    EV_MSG_FIELD(event_buffer, value) = htons(client_event->value);
+
+    write(connection, event_buffer, sizeof(event_buffer));
+}
+
 void flush_events(Display* display) {
     XEvent e;
     while (XPending(display)) XNextEvent(display, &e);
@@ -318,7 +327,7 @@ void forward_key_button_event(Display* display, XEvent* event, int connection,
         }
     }
 
-    write(connection, &cl_event, sizeof(cl_event));
+    write_client_event(connection, &cl_event);
 }
 
 void usage(const char* program_name) {
@@ -449,13 +458,13 @@ int main(int argc, char* argv[]) {
                     if (dx != 0) {
                         event.type = EV_MOUSE_DX;
                         event.value = dx;
-                        write(connection, &event, sizeof(event));
+                        write_client_event(connection, &event);
                     }
 
                     if (dy != 0) {
                         event.type = EV_MOUSE_DY;
                         event.value = dy;
-                        write(connection, &event, sizeof(event));
+                        write_client_event(connection, &event);
                     }
 
                     reset_pointer(display, &pointer_info.reset_position);
