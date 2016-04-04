@@ -1,4 +1,4 @@
-APP := inputd
+APP := remote-inputd
 
 SHELL=bash -o pipefail
 
@@ -13,11 +13,11 @@ $(DIRECTORIES):
 	mkdir -p $@
 
 CC := gcc
-CFLAGS = -std=c11 -Wall -Og -g
+CFLAGS = -std=c11 -Wall -O0 -g
 CFLAGS += -Werror=format-security -Wshadow -Wformat
 CPPFLAGS = -D_XOPEN_SOURCE=700
 
-SRCS = inputd.c logging.c input_device.c server.c
+SRCS = remote-inputd.c logging.c input_device.c server.c
 
 ifeq ($(TARGET), ANDROID)
 
