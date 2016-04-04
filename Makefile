@@ -15,6 +15,8 @@ $(DIRECTORIES):
 CC := gcc
 CFLAGS = -std=c11 -Wall -O0 -g
 CFLAGS += -Werror=format-security -Wshadow -Wformat
+CFLAGS += -fstack-protector -fno-strict-aliasing
+CFLAGS += -Wa,--noexecstack
 CPPFLAGS = -D_XOPEN_SOURCE=700
 
 SRCS = remote-inputd.c logging.c input_device.c server.c
@@ -37,13 +39,9 @@ CC := $(TOOLCHAIN)/bin/arm-linux-androideabi-gcc
 
 CFLAGS += -I$(SYSROOT)/usr/include
 CFLAGS += -fdiagnostics-color=auto
-CFLAGS += -fpic -ffunction-sections -funwind-tables
-CFLAGS += -fstack-protector -no-canonical-prefixes -march=armv7-a
-CFLAGS += -mfpu=vfpv3-d16 -mfloat-abi=softfp -mthumb
-CFLAGS += -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64
-CFLAGS += -Wa,--noexecstack
-CFLAGS += -fPIE -ffunction-sections
-CFLAGS += -funwind-tables -fstack-protector
+CFLAGS += -fpic -fPIE
+CFLAGS += -no-canonical-prefixes
+CFLAGS += -march=armv7-a -mthumb
 
 CPPFLAGS += -DANDROID
 
