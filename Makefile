@@ -56,14 +56,13 @@ DEPS = $(patsubst %, $(DEPDIR)/%.d, $(basename $(SRCS)))
 $(DEPDIR)/%.d: %.c | $(DEPDIR)
 	$(CC) $(CFLAGS) -MG -MM -MP -MT $@ -MT $(OUT)/$(<:.c=.o) -MF $@ $<
 
--include $(DEPS)
-
 $(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk | $(GENDIR)
 	$(CPP) $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | ./generate_keymap.awk > $@
 
 $(OUT)/%.o: %.c | $(OUT)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
+.DEFAULT_GOAL: remote-inputd
 remote-inputd: $(patsubst %, $(OUT)/%.o, $(basename $(SRCS)))
 	$(CC) $(LDFLAGS) -o $@ $^
 
@@ -73,4 +72,8 @@ forward_input: forward_input.c keysym_to_linux_code.c
 all: remote-inputd forward_input
 
 clean:
-	@rm -rf remote-inputd forward_input $(OUT)
+	rm -rf remote-inputd forward_input $(OUT)
+
+ifneq ($(MAKECMDGOALS), clean)
+-include $(DEPS)
+endif
