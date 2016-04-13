@@ -290,7 +290,7 @@ void device_close(struct input_device* device) {
 void commit_event(struct input_device* device, struct input_event* event) {
     gettimeofday(&event->time, NULL);
     if (write(device->uinput_fd, event, sizeof(struct input_event)) < 0) {
-        LOG_ERRNO("error commiting event");
+        LOG_ERRNO("error committing event");
     }
 }
 
