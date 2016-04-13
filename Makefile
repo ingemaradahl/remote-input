@@ -67,7 +67,7 @@ remote-inputd: $(patsubst %, $(OUT)/%.o, $(basename $(SRCS)))
 	$(CC) $(LDFLAGS) -o $@ $^
 
 forward_input: forward_input.c keysym_to_linux_code.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -L/usr/X11R6/lib -lX11 $^ -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(shell pkg-config --libs --cflags x11) $^ -o $@
 
 all: remote-inputd forward_input
 
