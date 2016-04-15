@@ -37,6 +37,8 @@
 
 #define DEFAULT_PORT_NUMBER 4004
 
+#define UNPRIVILEGED_USER "nobody"
+
 #define FATAL_ERRNO(format) { \
         LOG_ERRNO(format); \
         exit(EXIT_FAILURE); \
@@ -112,11 +114,18 @@ void daemonize() {
 }
 
 void drop_privileges() {
-    struct passwd* nobody_user = getpwnam("nobody");
-    if(setgid(nobody_user->pw_gid) < 0) {
+    struct passwd* unprivileged_user = getpwnam(UNPRIVILEGED_USER);
+
+    if (unprivileged_user == NULL) {
+        LOG(ERROR, "couldn't find user \"%s\"", UNPRIVILEGED_USER);
+        exit(EXIT_FAILURE);
+    }
+
+    if(setgid(unprivileged_user->pw_gid) < 0) {
         FATAL_ERRNO("couldn't change group");
     }
-    if(setuid(nobody_user->pw_uid) < 0) {
+
+    if(setuid(unprivileged_user->pw_uid) < 0) {
         FATAL_ERRNO("couldn't change user");
     }
 }
