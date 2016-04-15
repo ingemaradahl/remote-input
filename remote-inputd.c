@@ -25,6 +25,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <syslog.h>
+#include <sys/wait.h>
 
 #include "input_device.h"
 #include "logging.h"
@@ -83,7 +84,17 @@ void daemonize() {
     if (pid < 0) FATAL_ERRNO("couldn't fork");
     if (pid > 0) {
         LOG(INFO, "forked daemon with pid [%d]", pid);
-        exit(EXIT_SUCCESS);
+
+        /* Wait for the child process to become the session leader, or else the
+         * parent might take it down on exit */
+        int child_status;
+        waitpid(pid, &child_status, 0);
+
+        exit(WEXITSTATUS(child_status));
+    }
+
+    if (setsid() < 0) {
+        FATAL_ERRNO("couldn't become a daemon");
     }
 
     log_set_target(SYSLOG);
