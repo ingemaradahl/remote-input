@@ -119,17 +119,17 @@ fallback:
 }
 
 #if !defined(UI_GET_SYSNAME)
-int read_sysfs_device_path(const char* device_name, char* sysfs_device_path,
-        size_t device_path_size) {
+int read_sysfs_device_path(const char* uinput_device_name,
+        char* sysfs_device_path, size_t device_path_size) {
     FILE* device_stream = fopen("/proc/bus/input/devices", "r");
     if (device_stream == NULL) {
         LOG_ERRNO("error opening /proc/bus/input/devices");
         return -1;
     }
 
-    char name_pattern[512];
+    char name_pattern[UINPUT_MAX_NAME_SIZE + sizeof("N: Name=\"\"\n")];
     snprintf(name_pattern, sizeof(name_pattern), "N: Name=\"%s\"\n",
-            device_name);
+            uinput_device_name);
 
     int status = 0;
     char* line = NULL;
@@ -137,8 +137,7 @@ int read_sysfs_device_path(const char* device_name, char* sysfs_device_path,
     ssize_t read;
     while ((read = getline(&line, &len, device_stream)) != -1) {
         // First, find the correct device section
-        if (read <= sizeof(name_pattern) &&
-                strncmp(line, name_pattern, read) != 0) {
+        if (read > sizeof(name_pattern) || strcmp(line, name_pattern) != 0) {
             continue;
         }
 
@@ -228,7 +227,7 @@ int device_create(const char* device_name, struct input_device* device) {
 
     device->event_fd = open_event_device(sysfs_device_path);
 #else
-    if (read_sysfs_device_path(device_name, sysfs_device_path,
+    if (read_sysfs_device_path(uinput_device.name, sysfs_device_path,
                 sizeof(sysfs_device_path)) != -1) {
         LOG(DEBUG, "created %s", sysfs_device_path);
         device->event_fd = open_event_device(sysfs_device_path);
