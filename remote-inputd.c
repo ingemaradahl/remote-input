@@ -44,7 +44,8 @@
         exit(EXIT_FAILURE); \
     }
 
-bool should_exit = false;
+/* Modified by signal handler, indicating that the main loop should exit */
+volatile sig_atomic_t should_exit = false;
 
 struct args {
     bool dont_daemonize;
