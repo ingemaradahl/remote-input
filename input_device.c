@@ -231,6 +231,8 @@ int device_create(const char* device_name, struct input_device* device) {
                 sizeof(sysfs_device_path)) != -1) {
         LOG(DEBUG, "created %s", sysfs_device_path);
         device->event_fd = open_event_device(sysfs_device_path);
+    } else {
+        device->event_fd = -1;
     }
 #endif
 
