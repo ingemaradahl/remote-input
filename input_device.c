@@ -169,18 +169,29 @@ exit:
 }
 #endif
 
-int device_create(const char* device_name, struct input_device* device) {
-    device->uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    if (device->uinput_fd < 0) {
-        if (errno == ENOENT) {
-            /* Some systems use an alternative location for the uinput device */
-            device->uinput_fd = open("/dev/input/uinput",
-                    O_WRONLY | O_NONBLOCK);
+int open_uinput_device() {
+    int uinput_fd;
 
-            LOG_ERRNO("couldn't open either /dev/uinput or /dev/input/uinput");
-            LOG(ERROR, "is the uinput module loaded?");
-        }
+    if ((uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) > 0) {
+        return uinput_fd;
+    }
+
+    if (errno != ENOENT) {
         LOG_ERRNO("couldn't open /dev/uinput");
+        return uinput_fd;
+    }
+
+    /* ENOENT: Some systems use an alternative location for the uinput device */
+    if ((uinput_fd = open("/dev/input/uinput", O_WRONLY | O_NONBLOCK)) < 0) {
+        LOG_ERRNO("couldn't open either /dev/uinput or /dev/input/uinput");
+        LOG(ERROR, "is the uinput module loaded?");
+    }
+
+    return uinput_fd;
+}
+
+int device_create(const char* device_name, struct input_device* device) {
+    if ((device->uinput_fd = open_uinput_device()) < 0) {
         return -1;
     }
 
