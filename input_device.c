@@ -48,7 +48,7 @@
 #define BUTTON_PRESS    1
 #define BUTTON_RELEASE  0
 
-int open_event_device(const char* sysfs_device) {
+static int open_event_device(const char* sysfs_device) {
     DIR* sysfs_dir = opendir(sysfs_device);
     if (sysfs_dir == NULL) {
         LOG_ERRNO("error reading device from %s", sysfs_device);
@@ -119,7 +119,7 @@ fallback:
 }
 
 #if !defined(UI_GET_SYSNAME)
-int read_sysfs_device_path(const char* uinput_device_name,
+static int read_sysfs_device_path(const char* uinput_device_name,
         char* sysfs_device_path, size_t device_path_size) {
     FILE* device_stream = fopen("/proc/bus/input/devices", "r");
     if (device_stream == NULL) {
@@ -169,7 +169,7 @@ exit:
 }
 #endif
 
-int open_uinput_device() {
+static int open_uinput_device() {
     int uinput_fd;
 
     if ((uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) > 0) {
@@ -299,14 +299,15 @@ void device_close(struct input_device* device) {
     device->uinput_fd = -1;
 }
 
-void commit_event(struct input_device* device, struct input_event* event) {
+static void commit_event(struct input_device* device,
+        struct input_event* event) {
     gettimeofday(&event->time, NULL);
     if (write(device->uinput_fd, event, sizeof(struct input_event)) < 0) {
         LOG_ERRNO("error committing event");
     }
 }
 
-void sync_device(struct input_device* device) {
+static void sync_device(struct input_device* device) {
     static struct input_event sync_event = {
         .type = EV_SYN,
         .code = SYN_REPORT
@@ -315,7 +316,7 @@ void sync_device(struct input_device* device) {
     commit_event(device, &sync_event);
 }
 
-void commit_mouse_event(struct input_device* device, uint16_t event_code_x,
+static void commit_mouse_event(struct input_device* device, uint16_t event_code_x,
         uint16_t event_code_y, int dx, int dy) {
     bool has_written = 0;
     struct input_event event = {
@@ -351,8 +352,8 @@ void device_mouse_wheel(struct input_device* device, int dx, int dy) {
     commit_mouse_event(device, REL_HWHEEL, REL_WHEEL, dx, dy);
 }
 
-void commit_device_key_event(struct input_device* device, uint16_t keycode,
-        int32_t value) {
+static void commit_device_key_event(struct input_device* device,
+        uint16_t keycode, int32_t value) {
     struct input_event event = {
         .type = EV_KEY,
         .code = keycode,

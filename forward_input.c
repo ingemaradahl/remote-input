@@ -34,7 +34,7 @@
 
 #define DEFAULT_SERVER_PORT_STR "4004"
 
-const uint32_t abort_mask = ShiftMask | ControlMask;
+static const uint32_t abort_mask = ShiftMask | ControlMask;
 
 /*
  * TODO: SIGPIPE when remote closed
@@ -57,14 +57,15 @@ struct args {
     char* server_port;
 };
 
-const struct args argument_defaults = {
+static const struct args argument_defaults = {
     .verbose = false,
     .quiet = false,
     .server_host = NULL,
     .server_port = DEFAULT_SERVER_PORT_STR
 };
 
-void get_screen_size(Display* display, uint16_t* ret_w, uint16_t* ret_h) {
+static void get_screen_size(Display* display, uint16_t* ret_w,
+        uint16_t* ret_h) {
     Window root_window = DefaultRootWindow(display);
 
     XWindowAttributes attributes;
@@ -74,13 +75,13 @@ void get_screen_size(Display* display, uint16_t* ret_w, uint16_t* ret_h) {
     *ret_h = attributes.height;
 }
 
-int32_t grab_root_window_keyboard(Display* display) {
+static int32_t grab_root_window_keyboard(Display* display) {
     Window root_window = DefaultRootWindow(display);
     return XGrabKeyboard(display, root_window, True /* owner_events */,
             GrabModeAsync, GrabModeAsync, CurrentTime);
 }
 
-int32_t lock_keyboard(Display* display) {
+static int32_t lock_keyboard(Display* display) {
     int32_t grab_result;
     if ((grab_result = grab_root_window_keyboard(display)) == AlreadyGrabbed) {
         /* The program might have been invoked from a grabbing client, such as
@@ -98,16 +99,16 @@ int32_t lock_keyboard(Display* display) {
     return grab_result;
 }
 
-void release_keyboard(Display* display) {
+static void release_keyboard(Display* display) {
    XUngrabKeyboard(display, CurrentTime);
 }
 
-void reset_pointer(Display* display, struct point* reset_position) {
+static void reset_pointer(Display* display, struct point* reset_position) {
     XWarpPointer(display, None, DefaultRootWindow(display), 0, 0, 0, 0,
             reset_position->x, reset_position->y);
 }
 
-int32_t grab_and_hide_root_window_pointer(Display* display) {
+static int32_t grab_and_hide_root_window_pointer(Display* display) {
     Window root_window = DefaultRootWindow(display);
 
     /* Replace the cursor with an invisible bitmap to "hide" it */
@@ -143,7 +144,8 @@ int32_t grab_and_hide_root_window_pointer(Display* display) {
     return grab_result;
 }
 
-int32_t lock_pointer(Display* display, struct pointer_info* pointer_info) {
+static int32_t lock_pointer(Display* display,
+        struct pointer_info* pointer_info) {
     Window root_window = DefaultRootWindow(display);
 
     Window pointer_root_w, pointer_child_w;
@@ -174,7 +176,7 @@ int32_t lock_pointer(Display* display, struct pointer_info* pointer_info) {
     return grab_result;
 }
 
-void release_pointer(Display* display, struct point* original_position) {
+static void release_pointer(Display* display, struct point* original_position) {
     Window root_window = DefaultRootWindow(display);
 
     XWarpPointer(display, None, root_window, 0, 0, 0, 0,
@@ -184,7 +186,7 @@ void release_pointer(Display* display, struct point* original_position) {
     XUngrabPointer(display, CurrentTime);
 }
 
-bool consume_autorepeat_event(Display* display, XEvent* event) {
+static bool consume_autorepeat_event(Display* display, XEvent* event) {
     if (XEventsQueued(display, QueuedAfterReading)) {
         XEvent next_event;
         XPeekEvent(display, &next_event);
@@ -200,7 +202,7 @@ bool consume_autorepeat_event(Display* display, XEvent* event) {
     return false;
 }
 
-int connect_to_server(const char* host, const char* service) {
+static int connect_to_server(const char* host, const char* service) {
     struct addrinfo connection_hints = {
         .ai_family = AF_UNSPEC,
         .ai_socktype = SOCK_STREAM,
@@ -236,7 +238,8 @@ int connect_to_server(const char* host, const char* service) {
     return socket_fd;
 }
 
-void write_client_event(int connection, struct client_event* client_event) {
+static void write_client_event(int connection,
+        struct client_event* client_event) {
     uint8_t event_buffer[EV_MSG_SIZE];
 
     EV_MSG_FIELD(event_buffer, type) = htons(client_event->type);
@@ -245,18 +248,18 @@ void write_client_event(int connection, struct client_event* client_event) {
     write(connection, event_buffer, sizeof(event_buffer));
 }
 
-void flush_events(Display* display) {
+static void flush_events(Display* display) {
     XEvent e;
     while (XPending(display)) XNextEvent(display, &e);
 }
 
-bool is_quit_combination(Display* display, XKeyEvent* event) {
+static bool is_quit_combination(Display* display, XKeyEvent* event) {
     KeySym keysym = XkbKeycodeToKeysym(display, event->keycode, 0, 0);
     return keysym == XK_Tab && (event->state & abort_mask) == abort_mask;
 }
 
-void forward_key_button_event(Display* display, XEvent* event, int connection,
-        bool verbose, bool quiet) {
+static void forward_key_button_event(Display* display, XEvent* event,
+        int connection, bool verbose, bool quiet) {
     struct client_event cl_event;
 
     switch (event->type) {
@@ -330,7 +333,7 @@ void forward_key_button_event(Display* display, XEvent* event, int connection,
     write_client_event(connection, &cl_event);
 }
 
-void usage(const char* program_name) {
+static void usage(const char* program_name) {
     printf("Usage: %s [OPTION] HOSTNAME [PORT]\n", program_name);
     puts("\nOptions:\n"
             "  -v  --verbose    write emitted events to stdout\n"
@@ -338,7 +341,7 @@ void usage(const char* program_name) {
             "  -h  --help       show this help text and exit");
 }
 
-struct args parse_args(int argc, char* argv[]) {
+static struct args parse_args(int argc, char* argv[]) {
     struct args args = argument_defaults;
 
     struct option const long_options[] = {

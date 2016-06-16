@@ -45,7 +45,7 @@
     }
 
 /* Modified by signal handler, indicating that the main loop should exit */
-volatile sig_atomic_t should_exit = false;
+static volatile sig_atomic_t should_exit = false;
 
 struct args {
     bool dont_daemonize;
@@ -54,14 +54,14 @@ struct args {
     char* local_host;
 };
 
-const struct args argument_defaults = {
+static const struct args argument_defaults = {
     .dont_daemonize = false,
     .verbosity = LOG_NOTICE,
     .local_port = DEFAULT_PORT_NUMBER,
     .local_host = NULL
 };
 
-void sig_handler(int signum) {
+static void sig_handler(int signum) {
     switch (signum) {
         case SIGINT:
         case SIGTERM:
@@ -70,7 +70,7 @@ void sig_handler(int signum) {
     }
 }
 
-int install_signal_handlers() {
+static int install_signal_handlers() {
     static struct sigaction sa = {
         .sa_handler = sig_handler
     };
@@ -82,7 +82,7 @@ int install_signal_handlers() {
     return 0;
 }
 
-void daemonize() {
+static void daemonize() {
     pid_t pid = fork();
     if (pid < 0) FATAL_ERRNO("couldn't fork");
     if (pid > 0) {
@@ -114,7 +114,7 @@ void daemonize() {
     }
 }
 
-void drop_privileges() {
+static void drop_privileges() {
     struct passwd* unprivileged_user = getpwnam(UNPRIVILEGED_USER);
 
     if (unprivileged_user == NULL) {
@@ -131,7 +131,8 @@ void drop_privileges() {
     }
 }
 
-void handle_event(struct input_device* device, struct client_event* event) {
+static void handle_event(struct input_device* device,
+        struct client_event* event) {
     switch (event->type) {
         case EV_MOUSE_DX:
             device_mouse_move(device, event->value, 0);
@@ -156,7 +157,8 @@ void handle_event(struct input_device* device, struct client_event* event) {
     }
 }
 
-void handle_client(struct client_info* client, struct input_device* device) {
+static void handle_client(struct client_info* client,
+        struct input_device* device) {
     struct client_event event;
 
     while (read_client_event(client, &event) > 0) {
@@ -170,7 +172,7 @@ void handle_client(struct client_info* client, struct input_device* device) {
     close(client->cl_fd);
 }
 
-void usage(const char* program_name) {
+static void usage(const char* program_name) {
     printf("Usage: %s [OPTION]\n", program_name);
     printf("\nOptions:\n"
             "  -d               don't detach and do not become a daemon\n"
@@ -182,7 +184,7 @@ void usage(const char* program_name) {
             , DEFAULT_PORT_NUMBER);
 }
 
-struct args parse_args(int argc, char* argv[]) {
+static struct args parse_args(int argc, char* argv[]) {
     struct args args = argument_defaults;
 
     struct option const long_options[] = {

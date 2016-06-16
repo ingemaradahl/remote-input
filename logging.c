@@ -26,9 +26,9 @@
 
 #define CLAMP(val, low, high) (val > high ? high : (val < low ? low : val))
 
-int log_level = LOG_NOTICE;
+static int log_level = LOG_NOTICE;
 
-enum log_target selected_target = STDIO;
+static enum log_target selected_target = STDIO;
 
 void log_set_level(int level) {
     log_level = CLAMP(level, LOG_ALERT, LOG_DEBUG);
@@ -38,7 +38,7 @@ void log_set_level(int level) {
 }
 
 PRINTF_TYPE(2,3)
-void stdio_log(int priority, const char* format, ...) {
+static void stdio_log(int priority, const char* format, ...) {
     if (priority > log_level) {
         return;
     }
