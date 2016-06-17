@@ -165,6 +165,7 @@ static int read_sysfs_device_path(const char* uinput_device_name,
 
 exit:
     free(line);
+    fclose(device_stream);
     return status;
 }
 #endif
