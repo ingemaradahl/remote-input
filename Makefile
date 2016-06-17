@@ -54,7 +54,7 @@ endif  # TARGET == ANDROID
 DEPS = $(patsubst %, $(DEPDIR)/%.d, $(basename $(SRCS)))
 
 $(DEPDIR)/%.d: %.c | $(DEPDIR)
-	$(CC) $(CFLAGS) -MG -MM -MP -MT $@ -MT $(OUT)/$(<:.c=.o) -MF $@ $<
+	$(CC) $(CPPFLAGS) -MG -MM -MP -MT $@ -MT $(OUT)/$(<:.c=.o) -MF $@ $<
 
 $(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk | $(GENDIR)
 	$(CPP) $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | ./generate_keymap.awk > $@
