@@ -43,9 +43,7 @@ uint16_t keysym_to_key(unsigned int keysym) {
         MAP(XK_Up, KEY_UP);
         MAP(XK_Right, KEY_RIGHT);
         MAP(XK_Down, KEY_DOWN);
-        //MAP(XK_Prior, );
         MAP(XK_Page_Up, KEY_PAGEUP);
-        //MAP(XK_Next, KEY_NEXT);
         MAP(XK_Page_Down, KEY_PAGEDOWN);
         MAP(XK_End, KEY_END);
         MAP(XK_Begin, KEY_HOME);
@@ -58,9 +56,7 @@ uint16_t keysym_to_key(unsigned int keysym) {
         MAP(XK_KP_Up, KEY_UP);
         MAP(XK_KP_Right, KEY_RIGHT);
         MAP(XK_KP_Down, KEY_DOWN);
-        //MAP(XK_KP_Prior, );
         MAP(XK_KP_Page_Up, KEY_PAGEUP);
-        //MAP(XK_KP_Next, KEY_NEXT);
         MAP(XK_KP_Page_Down, KEY_PAGEDOWN);
         MAP(XK_KP_End, KEY_END);
         MAP(XK_KP_Begin, KEY_HOME);
@@ -71,7 +67,7 @@ uint16_t keysym_to_key(unsigned int keysym) {
         MAP(XK_KP_Add, KEY_KPPLUS);
         MAP(XK_KP_Separator, KEY_KPCOMMA);
         MAP(XK_KP_Subtract, KEY_KPMINUS);
-        //MAP(XK_KP_Decimal, );
+        MAP(XK_KP_Decimal, KEY_KP0);
         MAP(XK_KP_Divide, KEY_KPSLASH);
 
         MAP(XK_KP_0, KEY_KP0);
@@ -111,67 +107,51 @@ uint16_t keysym_to_key(unsigned int keysym) {
 
         /* Latin 1 */
         MAP(XK_space, KEY_SPACE);
-        //MAP(XK_exclam, KEY_EXCLAM);
-        //MAP(XK_quotedbl, KEY_QUOTEDBL);
-        //MAP(XK_numbersign, KEY_NUMBERSIGN);
-        //MAP(XK_dollar, KEY_DOLLAR);
-        //MAP(XK_percent, KEY_PERCENT);
-        //MAP(XK_ampersand, KEY_AMPERSAND);
         MAP(XK_apostrophe, KEY_APOSTROPHE);
-        /*MAP(XK_quoteright, KEY_QUOTERIGHT);*/
-        //MAP(XK_parenleft, KEY_LEFTBRACE); /* ?? */
-        //MAP(XK_parenright, KEY_RIGHTBRACE); /* ?? */
-        //MAP(XK_asterisk, KEY_ASTERISK);
-        //MAP(XK_plus, KEY_PLUS);
         MAP(XK_comma, KEY_COMMA);
 
         MAP(XK_minus, KEY_MINUS);
         MAP(XK_period, KEY_DOT);
         MAP(XK_slash, KEY_SLASH);
-        MAP(XK_0, KEY_0);
-        MAP(XK_1, KEY_1);
-        MAP(XK_2, KEY_2);
-        MAP(XK_3, KEY_3);
-        MAP(XK_4, KEY_4);
-        MAP(XK_5, KEY_5);
-        MAP(XK_6, KEY_6);
-        MAP(XK_7, KEY_7);
-        MAP(XK_8, KEY_8);
-        MAP(XK_9, KEY_9);
-        //MAP(XK_colon, KEY_COLON);
+        AUTOMAP(0);
+        AUTOMAP(1);
+        AUTOMAP(2);
+        AUTOMAP(3);
+        AUTOMAP(4);
+        AUTOMAP(5);
+        AUTOMAP(6);
+        AUTOMAP(7);
+        AUTOMAP(8);
+        AUTOMAP(9);
         MAP(XK_semicolon, KEY_SEMICOLON);
-        //MAP(XK_less, KEY_LESS);
         MAP(XK_equal, KEY_EQUAL);
-        //MAP(XK_greater, KEY_GREATER);
-        //MAP(XK_question, KEY_QUESTION);
-        //MAP(XK_at, KEY_AT);
 
-        MAP(XK_A, KEY_A);
-        MAP(XK_B, KEY_B);
-        MAP(XK_C, KEY_C);
-        MAP(XK_D, KEY_D);
-        MAP(XK_E, KEY_E);
-        MAP(XK_F, KEY_F);
-        MAP(XK_G, KEY_G);
-        MAP(XK_H, KEY_H);
-        MAP(XK_I, KEY_I);
-        MAP(XK_J, KEY_J);
-        MAP(XK_K, KEY_K);
-        MAP(XK_L, KEY_L);
-        MAP(XK_M, KEY_M);
-        MAP(XK_N, KEY_N);
-        MAP(XK_O, KEY_O);
-        MAP(XK_P, KEY_P);
-        MAP(XK_Q, KEY_Q);
-        MAP(XK_R, KEY_R);
-        MAP(XK_S, KEY_S);
-        MAP(XK_T, KEY_T);
-        MAP(XK_U, KEY_U);
-        MAP(XK_V, KEY_V);
-        MAP(XK_W, KEY_W);
-        MAP(XK_X, KEY_X);
-        MAP(XK_Y, KEY_Y);
-        MAP(XK_Z, KEY_Z);
+        AUTOMAP(A);
+        AUTOMAP(B);
+        AUTOMAP(C);
+        AUTOMAP(D);
+        AUTOMAP(E);
+        AUTOMAP(F);
+        AUTOMAP(G);
+        AUTOMAP(H);
+        AUTOMAP(I);
+        AUTOMAP(J);
+        AUTOMAP(K);
+        AUTOMAP(L);
+        AUTOMAP(M);
+        AUTOMAP(N);
+        AUTOMAP(O);
+        AUTOMAP(P);
+        AUTOMAP(Q);
+        AUTOMAP(R);
+        AUTOMAP(S);
+        AUTOMAP(T);
+        AUTOMAP(U);
+        AUTOMAP(V);
+        AUTOMAP(W);
+        AUTOMAP(X);
+        AUTOMAP(Y);
+        AUTOMAP(Z);
 
         MAP(XK_a, KEY_A);
         MAP(XK_b, KEY_B);
@@ -203,15 +183,7 @@ uint16_t keysym_to_key(unsigned int keysym) {
         MAP(XK_bracketleft, KEY_LEFTBRACE);
         MAP(XK_backslash, KEY_BACKSLASH);
         MAP(XK_bracketright, KEY_RIGHTBRACE);
-        //MAP(XK_asciicircum, KEY_ASCIICIRCUM);
-        //MAP(XK_underscore, KEY_UNDERSCORE);
         MAP(XK_grave, KEY_GRAVE);
-        //MAP(XK_quoteleft, KEY_QUOTELEFT);
-
-        //MAP(XK_braceleft, KEY_BRACELEFT);
-        //MAP(XK_bar, KEY_BAR);
-        //MAP(XK_braceright, KEY_BRACERIGHT);
-        //MAP(XK_asciitilde, KEY_ASCIITILDE);
 
         /* Pointer mapping */
         MAP(Button1, BTN_LEFT);
