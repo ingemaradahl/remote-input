@@ -161,6 +161,10 @@ static int read_sysfs_device_path(const char* device_name,
             // Found this line as well, copy it and break out of both loops
             ssize_t sysfs_len = sizeof("/sys") - 1 /* \0 */;
             ssize_t device_len = read - pattern_len + sysfs_len;
+            if (device_len > device_path_size) {
+                LOG(ERROR, "sysfs device path too long");
+                break;
+            }
             snprintf(sysfs_device_path, device_len, "/sys%s",
                     &line[pattern_len] /* skip past the leading pattern */);
             goto exit;
