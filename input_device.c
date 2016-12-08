@@ -20,6 +20,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
@@ -32,16 +33,12 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include "logging.h"
+
 #ifndef UINPUT_VERSION
 /* UINPUT_VERSION was added in uinput 0.3; assume 0.2 */
 #define UINPUT_VERSION 2
 #endif
-
-#if UINPUT_VERSION < 4
-#include <stdlib.h>
-#endif
-
-#include "logging.h"
 
 #define IOCTL_BIND(fd, message, cleanup_label) { \
         int __bound_ioctl_fd = fd; \
@@ -127,7 +124,6 @@ fallback:
     return event_fd;
 }
 
-#if UINPUT_VERSION < 4
 static int read_sysfs_device_path(const char* device_name,
         char* sysfs_device_path, size_t device_path_size) {
     FILE* device_stream = fopen("/proc/bus/input/devices", "r");
@@ -181,7 +177,29 @@ exit:
     fclose(device_stream);
     return status;
 }
+
+static int open_uinput_event_device(int uinput_fd, const char* device_name) {
+    char sysfs_device_path[] = "/sys/devices/virtual/input/inputNNNN";
+
+#if UINPUT_VERSION >= 4
+    size_t dirname_size = sizeof("/sys/devices/virtual/input/") - 1 /* \0 */;
+    size_t device_name_size = sizeof("inputNNNN");
+    if (ioctl(uinput_fd, UI_GET_SYSNAME(device_name_size),
+                &sysfs_device_path[dirname_size]) != -1) {
+        LOG(DEBUG, "created %s", sysfs_device_path);
+        return open_event_device(sysfs_device_path);
+    }
 #endif
+
+    if (read_sysfs_device_path(device_name, sysfs_device_path,
+                sizeof(sysfs_device_path)) != -1) {
+        LOG(DEBUG, "created %s", sysfs_device_path);
+        return open_event_device(sysfs_device_path);
+    }
+
+    return -1;
+}
+
 
 static int open_uinput_device() {
     int uinput_fd;
@@ -280,30 +298,13 @@ int device_create(const char* device_name, struct input_device* device) {
     }
 
     IOCTL(UI_DEV_CREATE);
+    IOCTL_END;
 
-    char sysfs_device_path[] = "/sys/devices/virtual/input/inputNNNN";
-#if UINPUT_VERSION >= 4
-    size_t dirname_size = sizeof("/sys/devices/virtual/input/") - 1 /* \0 */;
-    size_t device_name_size = sizeof("inputNNNN");
-    IOCTL(UI_GET_SYSNAME(device_name_size), &sysfs_device_path[dirname_size]);
-    LOG(DEBUG, "created %s", sysfs_device_path);
-
-    device->event_fd = open_event_device(sysfs_device_path);
-#else
-    if (read_sysfs_device_path(device_name, sysfs_device_path,
-                sizeof(sysfs_device_path)) != -1) {
-        LOG(DEBUG, "created %s", sysfs_device_path);
-        device->event_fd = open_event_device(sysfs_device_path);
-    } else {
-        device->event_fd = -1;
-    }
-#endif
-
+    device->event_fd = open_uinput_event_device(device->uinput_fd, device_name);
     if (device->event_fd < 0) {
         LOG(WARNING, "unable to open event device!");
     }
 
-    IOCTL_END;
 
     return 0;
 
