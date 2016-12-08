@@ -32,6 +32,15 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#ifndef UINPUT_VERSION
+/* UINPUT_VERSION was added in uinput 0.3; assume 0.2 */
+#define UINPUT_VERSION 2
+#endif
+
+#if UINPUT_VERSION < 4
+#include <stdlib.h>
+#endif
+
 #include "logging.h"
 
 #define IOCTL_BIND(fd, message, cleanup_label) { \
@@ -118,8 +127,8 @@ fallback:
     return event_fd;
 }
 
-#if !defined(UI_GET_SYSNAME)
-static int read_sysfs_device_path(const char* uinput_device_name,
+#if UINPUT_VERSION < 4
+static int read_sysfs_device_path(const char* device_name,
         char* sysfs_device_path, size_t device_path_size) {
     FILE* device_stream = fopen("/proc/bus/input/devices", "r");
     if (device_stream == NULL) {
@@ -127,9 +136,9 @@ static int read_sysfs_device_path(const char* uinput_device_name,
         return -1;
     }
 
-    char name_pattern[UINPUT_MAX_NAME_SIZE + sizeof("N: Name=\"\"\n")];
-    snprintf(name_pattern, sizeof(name_pattern), "N: Name=\"%s\"\n",
-            uinput_device_name);
+    char name_pattern[UINPUT_MAX_NAME_SIZE - 1 + sizeof("N: Name=\"\"\n")];
+    snprintf(name_pattern, sizeof(name_pattern), "N: Name=\"%.*s\"\n",
+            UINPUT_MAX_NAME_SIZE - 1, device_name);
 
     int status = 0;
     char* line = NULL;
@@ -191,6 +200,52 @@ static int open_uinput_device() {
     return uinput_fd;
 }
 
+#if UINPUT_VERSION >= 5
+static int uinput_runtime_version(int uinput_fd) {
+    unsigned int uinput_version;
+    if ((ioctl(uinput_fd, UI_GET_VERSION, &uinput_version) != -1))
+        return uinput_version;
+
+    return -1;
+}
+
+static int setup_uinput_device_v5(int uinput_fd, const char* device_name,
+        const struct input_id* device_input_id) {
+    struct uinput_setup device_setup = {
+        .id = *device_input_id
+    };
+    strncpy(device_setup.name, device_name, UINPUT_MAX_NAME_SIZE);
+
+    return ioctl(uinput_fd, UI_DEV_SETUP, &device_setup);
+}
+#endif
+
+static int setup_uinput_device_v1(int uinput_fd, const char* device_name,
+        const struct input_id* device_input_id) {
+    struct uinput_user_dev uinput_device = {
+        .id = *device_input_id
+    };
+    strncpy(uinput_device.name, device_name, UINPUT_MAX_NAME_SIZE);
+
+    return write(uinput_fd, &uinput_device, sizeof(uinput_device));
+}
+
+static int setup_uinput_device(int uinput_fd, const char* device_name) {
+    const struct input_id device_input_id = {
+        .bustype = BUS_VIRTUAL,
+        .vendor = 0x1,
+        .product = 0x1,
+        .version = 1
+    };
+
+#if UINPUT_VERSION >= 5
+    if (uinput_runtime_version(uinput_fd) >= 5)
+        return setup_uinput_device_v5(uinput_fd, device_name, &device_input_id);
+#endif
+
+    return setup_uinput_device_v1(uinput_fd, device_name, &device_input_id);
+}
+
 int device_create(const char* device_name, struct input_device* device) {
     if ((device->uinput_fd = open_uinput_device()) < 0) {
         return -1;
@@ -215,23 +270,15 @@ int device_create(const char* device_name, struct input_device* device) {
     IOCTL(UI_SET_RELBIT, REL_WHEEL);
     IOCTL(UI_SET_RELBIT, REL_HWHEEL);
 
-    struct uinput_user_dev uinput_device = {
-        .id.bustype = BUS_VIRTUAL,
-        .id.vendor = 0x1,
-        .id.product = 0x1,
-        .id.version = 1
-    };
-    strncpy(uinput_device.name, device_name, UINPUT_MAX_NAME_SIZE);
-
-    if (write(device->uinput_fd, &uinput_device, sizeof(uinput_device)) < 0) {
-        LOG_ERRNO("write error creating device");
+    if (setup_uinput_device(device->uinput_fd, device_name) < 0) {
+        LOG_ERRNO_HERE("error setting up uinput device");
         goto error;
     }
 
     IOCTL(UI_DEV_CREATE);
 
     char sysfs_device_path[] = "/sys/devices/virtual/input/inputNNNN";
-#if defined(UI_GET_SYSNAME)
+#if UINPUT_VERSION >= 4
     size_t dirname_size = sizeof("/sys/devices/virtual/input/") - 1 /* \0 */;
     size_t device_name_size = sizeof("inputNNNN");
     IOCTL(UI_GET_SYSNAME(device_name_size), &sysfs_device_path[dirname_size]);
@@ -239,7 +286,7 @@ int device_create(const char* device_name, struct input_device* device) {
 
     device->event_fd = open_event_device(sysfs_device_path);
 #else
-    if (read_sysfs_device_path(uinput_device.name, sysfs_device_path,
+    if (read_sysfs_device_path(device_name, sysfs_device_path,
                 sizeof(sysfs_device_path)) != -1) {
         LOG(DEBUG, "created %s", sysfs_device_path);
         device->event_fd = open_event_device(sysfs_device_path);
