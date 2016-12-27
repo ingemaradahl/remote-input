@@ -204,7 +204,7 @@ static int open_uinput_event_device(int uinput_fd, const char* device_name) {
 static int open_uinput_device() {
     int uinput_fd;
 
-    if ((uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) > 0) {
+    if ((uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) != -1) {
         return uinput_fd;
     }
 
@@ -214,7 +214,7 @@ static int open_uinput_device() {
     }
 
     /* ENOENT: Some systems use an alternative location for the uinput device */
-    if ((uinput_fd = open("/dev/input/uinput", O_WRONLY | O_NONBLOCK)) < 0) {
+    if ((uinput_fd = open("/dev/input/uinput", O_WRONLY | O_NONBLOCK)) != -1) {
         LOG_ERRNO("couldn't open either /dev/uinput or /dev/input/uinput");
         LOG(ERROR, "is the uinput module loaded?");
     }
