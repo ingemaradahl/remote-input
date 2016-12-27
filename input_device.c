@@ -236,7 +236,7 @@ static int setup_uinput_device_v5(int uinput_fd, const char* device_name,
     struct uinput_setup device_setup = {
         .id = *device_input_id
     };
-    strncpy(device_setup.name, device_name, UINPUT_MAX_NAME_SIZE);
+    snprintf(device_setup.name, UINPUT_MAX_NAME_SIZE, "%s", device_name);
 
     return ioctl(uinput_fd, UI_DEV_SETUP, &device_setup);
 }
@@ -247,7 +247,7 @@ static int setup_uinput_device_v1(int uinput_fd, const char* device_name,
     struct uinput_user_dev uinput_device = {
         .id = *device_input_id
     };
-    strncpy(uinput_device.name, device_name, UINPUT_MAX_NAME_SIZE);
+    snprintf(uinput_device.name, UINPUT_MAX_NAME_SIZE, "%s", device_name);
 
     return write(uinput_fd, &uinput_device, sizeof(uinput_device));
 }
