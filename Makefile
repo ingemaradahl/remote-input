@@ -1,14 +1,14 @@
 SHELL=bash -o pipefail
 
-remote-inputd:
+deps = $(patsubst %, $(DEPDIR)/%.d, $(basename $(1)))
+objs = $(patsubst %, $(OUT)/%.o, $(basename $(1)))
+
+.DEFAULT_GOAL = remote-inputd
+.PHONY: all clean test
 
 OUT = out
 DEPDIR = $(OUT)/deps
 GENDIR = $(OUT)/gen
-
-DIRECTORIES = $(OUT) $(DEPDIR) $(GENDIR)
-$(DIRECTORIES):
-	mkdir -p $@
 
 CFLAGS += -std=c11 -Wall
 CFLAGS += -Werror=format-security -Wshadow -Wformat
@@ -17,7 +17,15 @@ CFLAGS += -Wa,--noexecstack
 
 CPPFLAGS += -D_XOPEN_SOURCE=700
 
-SRCS = remote-inputd.c logging.c input_device.c server.c
+CC_TARGETS = remote-inputd forward_input $(OUT)/test_runner
+FWD_INPUT_SRCS = forward_input.c keysym_to_linux_code.c
+REMOTE_INPUTD_SRCS = remote-inputd.c logging.c input_device.c server.c
+TEST_SRCS = \
+	test/server_test.c \
+	test/socket_mock.c \
+	test/test_runner.c
+TEST_DEPS = $(call objs, logging.c)
+TEST_UNITS = $(call objs, server.c)
 
 ifeq ($(TARGET), ANDROID)
 
@@ -51,29 +59,39 @@ LDFLAGS += -Wl,--fix-cortex-a8 -Wl,--no-undefined -Wl,-z,noexecstack
 LDFLAGS += -Wl,-z,relro -Wl,-z,now
 endif  # TARGET == ANDROID
 
-DEPS = $(patsubst %, $(DEPDIR)/%.d, $(basename $(SRCS)))
-
-$(DEPDIR)/%.d: %.c | $(DEPDIR)
+$(DEPDIR)/%.d: %.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) -MG -MM -MP -MT $@ -MT $(OUT)/$(<:.c=.o) -MF $@ $<
 
-$(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk | $(GENDIR)
+$(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk
+	@mkdir -p $(dir $@)
 	$(CPP) $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | ./generate_keymap.awk > $@
 
-$(OUT)/%.o: %.c | $(OUT)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+$(OUT)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-.DEFAULT_GOAL: remote-inputd
-remote-inputd: $(patsubst %, $(OUT)/%.o, $(basename $(SRCS)))
+$(CC_TARGETS):
 	$(CC) $(LDFLAGS) -o $@ $^
 
-forward_input: forward_input.c keysym_to_linux_code.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(shell pkg-config --libs --cflags x11) $^ -o $@
+remote-inputd: $(call objs, $(REMOTE_INPUTD_SRCS))
+
+$(call objs, $(TEST_SRCS)): CPPFLAGS += -I.
+$(OUT)/test_runner: $(call objs, $(TEST_SRCS)) $(TEST_UNITS) $(TEST_DEPS)
+$(OUT)/test_runner: CFLAGS += $(shell pkg-config --cflags check)
+$(OUT)/test_runner: LDFLAGS += $(shell pkg-config --libs check)
+
+forward_input: $(call objs, $(FWD_INPUT_SRCS))
+forward_input: LDFLAGS += $(shell pkg-config --libs x11)
 
 all: remote-inputd forward_input
 
 clean:
-	rm -rf remote-inputd forward_input $(OUT)
+	rm -rf $(CC_TARGETS) $(OUT)
+
+test: $(OUT)/test_runner
+	$<
 
 ifneq ($(MAKECMDGOALS), clean)
--include $(DEPS)
+-include $(call deps, $(REMOTE_INPUTD_SRCS) $(FWD_INPUT_SRCS) $(TEST_SRCS))
 endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Ingemar Ådahl
+ * Copyright (C) 2017 Ingemar Ådahl
  *
  * This file is part of remote-input.
  *
@@ -16,31 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with remote-input.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _SERVER_H_
-#define _SERVER_H_
+#ifndef _TEST_SOCKET_MOCK_H_
+#define _TEST_SOCKET_MOCK_H_
 
-#include <stdint.h>
-#include <netinet/in.h>
+void mock_accept_response(int bound_socket, int client_socket,
+        const char* client_addr, unsigned short sa_family);
 
-struct client_event;
+void free_accept_responses();
 
-struct server_info {
-    char sv_addr[INET6_ADDRSTRLEN];
-    uint16_t sv_port;
-    int sv_fd;
-};
-
-struct client_info {
-    char cl_addr[INET6_ADDRSTRLEN];
-    int cl_fd;
-};
-
-int server_create(const char* local_ip, uint16_t port, struct server_info*);
-
-void server_close(struct server_info*);
-
-int server_accept(const struct server_info*, struct client_info* client);
-
-int read_client_event(struct client_info* client, struct client_event* event);
-
-#endif /* _SERVER_H_ */
+#endif  /* _TEST_SOCKET_MOCK_H_ */

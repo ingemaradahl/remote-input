@@ -102,7 +102,8 @@ void server_close(struct server_info* server) {
     close(server->sv_fd);
 }
 
-int server_accept(struct server_info* server, struct client_info* client) {
+int server_accept(const struct server_info* server,
+        struct client_info* client) {
     struct sockaddr_storage client_sockaddr;
     socklen_t client_addr_len = sizeof(client_sockaddr);
     client->cl_fd = accept(server->sv_fd, (struct sockaddr*)&client_sockaddr,

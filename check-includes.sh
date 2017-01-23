@@ -33,7 +33,7 @@ EOF
 command -v "$IWYU" > /dev/null || fail "\"$IWYU\" not found"
 
 exit_code=0
-for f in *.c; do
+for f in *.c test/*.c; do
     $IWYU -Xiwyu --mapping_file=<(emit_iwyu_mapping) "$f"
     if [ $? -ne $IWYU_EXIT_SUCCESS ]; then
         exit_code=1
