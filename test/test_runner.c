@@ -17,12 +17,35 @@
  * along with remote-input.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <check.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 #include "test/test_suites.h"
+
+pid_t tracer_pid() {
+    pid_t pid = -1;
+    FILE* proc_status = fopen("/proc/self/status", "r");
+
+    char* line = NULL;
+    size_t line_len = 0;
+    while (getline(&line, &line_len, proc_status) != -1
+            && sscanf(line, "TracerPid:\t%u\n", &pid) != 1);
+
+    free(line);
+    fclose(proc_status);
+
+    return pid;
+}
 
 int main(int argc, char* argv[]) {
     SRunner* runner = srunner_create(server_suite());
     srunner_add_suite(runner, shared_suite());
+
+    if (tracer_pid() > 0) {
+        printf("Debugger detected, disabling test forking.\n");
+        srunner_set_fork_status(runner, CK_NOFORK);
+    }
 
     srunner_run_all(runner, CK_ENV);
     int number_failed = srunner_ntests_failed(runner);
