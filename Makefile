@@ -22,6 +22,7 @@ FWD_INPUT_SRCS = forward_input.c keysym_to_linux_code.c
 REMOTE_INPUTD_SRCS = remote-inputd.c logging.c input_device.c server.c
 TEST_SRCS = \
 	test/server_test.c \
+	test/shared_test.c \
 	test/socket_mock.c \
 	test/test_runner.c
 TEST_DEPS = $(call objs, logging.c)

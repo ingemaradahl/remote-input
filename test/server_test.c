@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with remote-input.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "test/server_test.h"
+#include "test/test_suites.h"
 
 #include <check.h>
 #include <errno.h>

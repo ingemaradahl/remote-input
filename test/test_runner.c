@@ -18,10 +18,11 @@
  */
 #include <check.h>
 
-#include "test/server_test.h"
+#include "test/test_suites.h"
 
 int main(int argc, char* argv[]) {
     SRunner* runner = srunner_create(server_suite());
+    srunner_add_suite(runner, shared_suite());
 
     srunner_run_all(runner, CK_ENV);
     int number_failed = srunner_ntests_failed(runner);

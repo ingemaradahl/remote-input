@@ -16,5 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with remote-input.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef _TEST_TEST_SUITES_H_
+#define _TEST_TEST_SUITES_H_
 
 struct Suite* server_suite();
+struct Suite* shared_suite();
+
+#endif  /* _TEST_TEST_SUITES_H_ */
