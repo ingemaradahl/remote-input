@@ -89,8 +89,8 @@ $(CC_TARGETS):
 remote-inputd: $(call objs, $(REMOTE_INPUTD_SRCS))
 
 $(call objs, $(TEST_SRCS)): CPPFLAGS += -I.
+$(call objs, $(TEST_SRCS)): CFLAGS += $(shell pkg-config --cflags check)
 $(OUT)/test_runner: $(call objs, $(TEST_SRCS)) $(TEST_UNITS) $(TEST_DEPS)
-$(OUT)/test_runner: CFLAGS += $(shell pkg-config --cflags check)
 $(OUT)/test_runner: LDFLAGS += $(shell pkg-config --libs check)
 
 forward_input: $(call objs, $(FWD_INPUT_SRCS))
