@@ -30,8 +30,6 @@
 #define PRINTF_TYPE(X, y)
 #endif
 
-void log_init();
-
 enum log_target {
     STDIO,
     SYSLOG
