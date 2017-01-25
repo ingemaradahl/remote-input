@@ -39,10 +39,11 @@ GCC_VERSION = 4.9
 PLATFORM_TARGET_VERSION=21
 PLATFORM_TARGET_ARCH=arm
 
-TOOLCHAIN = $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(GCC_VERSION)/prebuilt/linux-x86_64
-SYSROOT = $(ANDROID_NDK)/platforms/android-$(PLATFORM_TARGET_VERSION)/arch-$(PLATFORM_TARGET_ARCH)
+TOOLCHAIN = $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(GCC_VERSION)
+TARGET_PLATFORM = $(ANDROID_NDK)/platforms/android-$(PLATFORM_TARGET_VERSION)
+SYSROOT = $(TARGET_PLATFORM)/arch-$(PLATFORM_TARGET_ARCH)
 
-CC = $(TOOLCHAIN)/bin/arm-linux-androideabi-gcc
+CC = $(TOOLCHAIN)/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc
 
 CFLAGS += -fdiagnostics-color=auto
 CFLAGS += -fpic -fPIE
@@ -66,7 +67,8 @@ $(DEPDIR)/%.d: %.c
 
 $(OUT)/gen/keymap.h: device_key_mapping.h generate_keymap.awk
 	@mkdir -p $(dir $@)
-	$(CPP) $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | ./generate_keymap.awk > $@
+	$(CPP) $(CPPFLAGS) -P -imacros linux/input.h $< | sort -n | \
+		./generate_keymap.awk > $@
 
 $(OUT)/%.o: %.c
 	@mkdir -p $(dir $@)
