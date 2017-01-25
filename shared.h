@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #define sizeof_field(type, field) sizeof(((type*)NULL)->field)
+#define ssizeof(type) ((ssize_t)sizeof(type))
 
 #define EV_DISCONNECT   0
 #define EV_KEY_DOWN     1

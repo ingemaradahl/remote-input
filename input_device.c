@@ -34,6 +34,7 @@
 #include <sys/time.h>
 
 #include "logging.h"
+#include "shared.h"
 
 #ifndef UINPUT_VERSION
 /* UINPUT_VERSION was added in uinput 0.3; assume 0.2 */
@@ -142,7 +143,7 @@ static int read_sysfs_device_path(const char* device_name,
     ssize_t read;
     while ((read = getline(&line, &len, device_stream)) != -1) {
         // First, find the correct device section
-        if (read > sizeof(name_pattern) || strcmp(line, name_pattern) != 0) {
+        if (read > ssizeof(name_pattern) || strcmp(line, name_pattern) != 0) {
             continue;
         }
 
@@ -157,7 +158,7 @@ static int read_sysfs_device_path(const char* device_name,
             // Found this line as well, copy it and break out of both loops
             ssize_t sysfs_len = sizeof("/sys") - 1 /* \0 */;
             ssize_t device_len = read - pattern_len + sysfs_len;
-            if (device_len > device_path_size) {
+            if (device_len > (ssize_t)device_path_size) {
                 LOG(ERROR, "sysfs device path too long");
                 break;
             }
@@ -317,13 +318,12 @@ void device_release_all_keys(struct input_device* device) {
     if (device->event_fd < 0) return;
 
     uint8_t keys[(KEY_MAX + (8 - 1)) / 8] = {0};
-    int res = ioctl(device->event_fd, EVIOCGKEY(sizeof(keys)), &keys);
-    if (res < 0) {
+    if (ioctl(device->event_fd, EVIOCGKEY(sizeof(keys)), &keys)) {
         LOG_ERRNO("ioctl");
         return;
     }
 
-    for (int i = 0; i < sizeof(keys); i++) {
+    for (size_t i = 0; i < sizeof(keys); i++) {
         if (keys[i] == 0) continue;
         for (int j = 0; j < 8; j++) {
             if (keys[i] & (1 << j)) {
@@ -417,11 +417,11 @@ static void commit_device_key_event(struct input_device* device,
 }
 
 void device_key_down(struct input_device* device, uint16_t keycode) {
-    LOG(DEBUG, "KEY DOWN [%d]", keycode);
+    LOG(DEBUG, "KEY DOWN [%u]", keycode);
     commit_device_key_event(device, keycode, BUTTON_PRESS);
 }
 
 void device_key_up(struct input_device* device, uint16_t keycode) {
-    LOG(DEBUG, "KEY UP [%d]", keycode);
+    LOG(DEBUG, "KEY UP [%u]", keycode);
     commit_device_key_event(device, keycode, BUTTON_RELEASE);
 }

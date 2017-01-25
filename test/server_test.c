@@ -95,7 +95,7 @@ START_TEST(test_server_accept_ebadf) {
     /* Quench errno logging */
     log_set_level(LOG_CRIT);
 
-    struct client_info client = {{0}};
+    struct client_info client = { .cl_fd = -1 };
     ck_assert_int_eq(-1, server_accept(&server, &client));
     ck_assert_int_eq(client.cl_fd, client_fd);
     ck_assert_str_eq(client.cl_addr, "");

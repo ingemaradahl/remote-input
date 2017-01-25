@@ -30,7 +30,7 @@ pid_t tracer_pid(void) {
     char* line = NULL;
     size_t line_len = 0;
     while (getline(&line, &line_len, proc_status) != -1
-            && sscanf(line, "TracerPid:\t%u\n", &pid) != 1);
+            && sscanf(line, "TracerPid:\t%d\n", &pid) != 1);
 
     free(line);
     fclose(proc_status);

@@ -13,8 +13,11 @@ GENDIR = $(OUT)/gen
 CFLAGS += -std=c11
 CFLAGS += \
 	-Wall \
-	-Werror=format-security \
-	-Wformat \
+	-Wextra \
+	-Werror \
+	-Wno-unused-parameter \
+	-Wformat-security \
+	-Wformat-nonliteral \
 	-Wold-style-definition \
 	-Wshadow \
 	-Wstrict-prototypes
