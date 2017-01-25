@@ -70,7 +70,7 @@ static void sig_handler(int signum) {
     }
 }
 
-static int install_signal_handlers() {
+static int install_signal_handlers(void) {
     static struct sigaction sa = {
         .sa_handler = sig_handler
     };
@@ -82,7 +82,7 @@ static int install_signal_handlers() {
     return 0;
 }
 
-static void daemonize() {
+static void daemonize(void) {
     pid_t pid = fork();
     if (pid < 0) FATAL_ERRNO("couldn't fork");
     if (pid > 0) {
@@ -114,7 +114,7 @@ static void daemonize() {
     }
 }
 
-static void drop_privileges() {
+static void drop_privileges(void) {
     struct passwd* unprivileged_user = getpwnam(UNPRIVILEGED_USER);
 
     if (unprivileged_user == NULL) {

@@ -201,7 +201,7 @@ static int open_uinput_event_device(int uinput_fd, const char* device_name) {
 }
 
 
-static int open_uinput_device() {
+static int open_uinput_device(void) {
     int uinput_fd;
 
     if ((uinput_fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) != -1) {

@@ -51,7 +51,7 @@ START_TEST(test_macro_noclobber) {
     ck_assert_int_eq(EV_MSG_FIELD(event[2], value), 0x0);
 } END_TEST
 
-Suite* shared_suite() {
+Suite* shared_suite(void) {
     Suite* shared_suite = suite_create("shared.h");
     TCase* shared_testcase = tcase_create("core");
 

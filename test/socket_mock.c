@@ -81,7 +81,7 @@ static struct accept_response* remove_recorded_response(int bound_socket) {
     return head;
 }
 
-void free_accept_responses() {
+void free_accept_responses(void) {
     while (g_responses != NULL) {
         struct accept_response* tmp = g_responses;
         g_responses = g_responses->next;

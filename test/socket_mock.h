@@ -22,6 +22,6 @@
 void mock_accept_response(int bound_socket, int client_socket,
         const char* client_addr, unsigned short sa_family);
 
-void free_accept_responses();
+void free_accept_responses(void);
 
 #endif  /* _TEST_SOCKET_MOCK_H_ */

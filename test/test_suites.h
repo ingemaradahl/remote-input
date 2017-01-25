@@ -19,7 +19,7 @@
 #ifndef _TEST_TEST_SUITES_H_
 #define _TEST_TEST_SUITES_H_
 
-struct Suite* server_suite();
-struct Suite* shared_suite();
+struct Suite* server_suite(void);
+struct Suite* shared_suite(void);
 
 #endif  /* _TEST_TEST_SUITES_H_ */

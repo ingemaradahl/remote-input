@@ -10,8 +10,14 @@ OUT = out
 DEPDIR = $(OUT)/deps
 GENDIR = $(OUT)/gen
 
-CFLAGS += -std=c11 -Wall
-CFLAGS += -Werror=format-security -Wshadow -Wformat
+CFLAGS += -std=c11
+CFLAGS += \
+	-Wall \
+	-Werror=format-security \
+	-Wformat \
+	-Wold-style-definition \
+	-Wshadow \
+	-Wstrict-prototypes
 CFLAGS += -fstack-protector -fno-strict-aliasing
 CFLAGS += -Wa,--noexecstack
 

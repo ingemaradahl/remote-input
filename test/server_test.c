@@ -103,7 +103,7 @@ START_TEST(test_server_accept_ebadf) {
     free_accept_responses();
 } END_TEST
 
-Suite* server_suite() {
+Suite* server_suite(void) {
     Suite* server_suite = suite_create("server.c");
     TCase* server_testcase = tcase_create("core");
 

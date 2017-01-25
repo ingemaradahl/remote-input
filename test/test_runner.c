@@ -23,7 +23,7 @@
 
 #include "test/test_suites.h"
 
-pid_t tracer_pid() {
+pid_t tracer_pid(void) {
     pid_t pid = -1;
     FILE* proc_status = fopen("/proc/self/status", "r");
 
