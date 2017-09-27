@@ -436,6 +436,7 @@ int main(int argc, char* argv[]) {
                     quit = true;
                     break;
                 }
+                /* fall through */
             case KeyRelease:
             case ButtonPress:
             case ButtonRelease:
