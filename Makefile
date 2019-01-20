@@ -84,17 +84,17 @@ $(OUT)/%.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(CC_TARGETS):
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 remote-inputd: $(call objs, $(REMOTE_INPUTD_SRCS))
 
 $(call objs, $(TEST_SRCS)): CPPFLAGS += -I.
 $(call objs, $(TEST_SRCS)): CFLAGS += $(shell pkg-config --cflags check)
 $(OUT)/test_runner: $(call objs, $(TEST_SRCS)) $(TEST_UNITS) $(TEST_DEPS)
-$(OUT)/test_runner: LDFLAGS += $(shell pkg-config --libs check)
+$(OUT)/test_runner: LDLIBS += $(shell pkg-config --libs check)
 
 forward_input: $(call objs, $(FWD_INPUT_SRCS))
-forward_input: LDFLAGS += $(shell pkg-config --libs x11)
+forward_input: LDLIBS += $(shell pkg-config --libs x11)
 
 all: remote-inputd forward_input
 
