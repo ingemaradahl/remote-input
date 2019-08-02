@@ -194,7 +194,7 @@ static struct args parse_args(int argc, char* argv[]) {
     };
 
     int ch;
-    while ((ch = getopt_long(argc, argv, "dvhlp:", long_options, NULL)) > 0) {
+    while ((ch = getopt_long(argc, argv, "dvhl:p:", long_options, NULL)) > 0) {
         switch (ch) {
             case 'd':
                 args.dont_daemonize = true;
