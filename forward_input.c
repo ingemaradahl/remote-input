@@ -35,6 +35,7 @@
 
 #define DEFAULT_SERVER_PORT_STR "4004"
 
+static const uint32_t abort_key = XK_Tab;
 static const uint32_t abort_mask = ShiftMask | ControlMask;
 
 /*
@@ -261,7 +262,7 @@ static void flush_events(Display* display) {
 
 static bool is_quit_combination(Display* display, XKeyEvent* event) {
     KeySym keysym = XkbKeycodeToKeysym(display, event->keycode, 0, 0);
-    return keysym == XK_Tab && (event->state & abort_mask) == abort_mask;
+    return keysym == abort_key && (event->state & abort_mask) == abort_mask;
 }
 
 static void forward_key_button_event(Display* display, XEvent* event,
