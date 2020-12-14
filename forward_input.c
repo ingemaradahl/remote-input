@@ -398,40 +398,7 @@ static struct args parse_args(int argc, char* argv[]) {
     return args;
 }
 
-int main(int argc, char* argv[]) {
-    struct args args = parse_args(argc, argv);
-
-    Display* display = XOpenDisplay(NULL);
-
-    if (display == NULL) {
-        fprintf(stderr, "Cannot open display\n");
-        exit(EXIT_FAILURE);
-    }
-
-    int connection = connect_to_server(args.server_host, args.server_port);
-    if (connection < 0) {
-        perror("error connecting to server");
-        exit(EXIT_FAILURE);
-    }
-
-    if (lock_keyboard(display) != GrabSuccess) {
-        fprintf(stderr, "Couldn't grab keyboard!");
-        exit(EXIT_FAILURE);
-    }
-
-    struct pointer_info pointer_info;
-    if (lock_pointer(display, &pointer_info) != GrabSuccess) {
-        fprintf(stderr, "Couldn't grab pointer!");
-        exit(EXIT_FAILURE);
-    }
-
-    flush_events(display);
-
-    if (!args.quiet) {
-        printf("Forwarding input to %s, press Ctrl-Shift-Tab to quit\n",
-                argv[1]);
-    }
-
+static void main_loop(Display* display, int connection, struct args args, struct pointer_info pointer_info) {
     bool quit = false;
     XEvent e;
     while (!quit) {
@@ -488,6 +455,44 @@ int main(int argc, char* argv[]) {
                 break;
         }
     }
+
+}
+
+int main(int argc, char* argv[]) {
+    struct args args = parse_args(argc, argv);
+
+    Display* display = XOpenDisplay(NULL);
+
+    if (display == NULL) {
+        fprintf(stderr, "Cannot open display\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int connection = connect_to_server(args.server_host, args.server_port);
+    if (connection < 0) {
+        perror("error connecting to server");
+        exit(EXIT_FAILURE);
+    }
+
+    if (lock_keyboard(display) != GrabSuccess) {
+        fprintf(stderr, "Couldn't grab keyboard!");
+        exit(EXIT_FAILURE);
+    }
+
+    struct pointer_info pointer_info;
+    if (lock_pointer(display, &pointer_info) != GrabSuccess) {
+        fprintf(stderr, "Couldn't grab pointer!");
+        exit(EXIT_FAILURE);
+    }
+
+    flush_events(display);
+
+    if (!args.quiet) {
+        printf("Forwarding input to %s:%s, press Ctrl-Shift-Tab to quit\n",
+                args.server_host, args.server_port);
+    }
+
+    main_loop(display, connection, args, pointer_info);
 
     release_pointer(display, &pointer_info.original_position);
     release_keyboard(display);
