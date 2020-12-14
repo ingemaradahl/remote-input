@@ -20,9 +20,9 @@ To build the `remote-inputd` daemon, issue
 make
 ```
 
-To build `forward_input`, issue
+To build `xforward-input`, issue
 ```
-make forward_input
+make xforward-input
 ```
 
 Running
@@ -34,7 +34,7 @@ sudo remote-inputd
 
 On the client, run
 ```
-forward_input <hostname>
+xforward-input <hostname>
 ```
 to grab the mouse and keyboard and forward input to `<hostname>`.
 
@@ -56,7 +56,7 @@ adb push remote-inputd /system/bin
 If that doesn't work, but you have managed to get `su` installed, you can
 try to manually remount the `/system` partition and install without using `cp`:
 ```
-adb push inpud /data/local/tmp
+adb push remote-inputd /data/local/tmp
 adb shell
 $ su
 # mount -o remount,rw /system
@@ -73,7 +73,7 @@ lower latency:
 ```
 adb forward tcp:4004 tcp:4004
 adb shell remote-inputd
-forward_input localhost
+xforward-input localhost
 ```
 
 Other software

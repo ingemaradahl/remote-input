@@ -26,8 +26,8 @@ CFLAGS += -Wa,--noexecstack
 
 CPPFLAGS += -D_XOPEN_SOURCE=700
 
-CC_TARGETS = remote-inputd forward_input $(OUT)/test_runner
-FWD_INPUT_SRCS = forward_input.c keysym_to_linux_code.c
+CC_TARGETS = remote-inputd xforward-input $(OUT)/test_runner
+FWD_INPUT_SRCS = xforward-input.c keysym_to_linux_code.c
 REMOTE_INPUTD_SRCS = remote-inputd.c logging.c input_device.c server.c
 TEST_SRCS = \
 	test/server_test.c \
@@ -93,10 +93,10 @@ $(call objs, $(TEST_SRCS)): CFLAGS += $(shell pkg-config --cflags check)
 $(OUT)/test_runner: $(call objs, $(TEST_SRCS)) $(TEST_UNITS) $(TEST_DEPS)
 $(OUT)/test_runner: LDLIBS += $(shell pkg-config --libs check)
 
-forward_input: $(call objs, $(FWD_INPUT_SRCS))
-forward_input: LDLIBS += $(shell pkg-config --libs x11)
+xforward-input: $(call objs, $(FWD_INPUT_SRCS))
+xforward-input: LDLIBS += $(shell pkg-config --libs x11)
 
-all: remote-inputd forward_input
+all: remote-inputd xforward-input
 
 clean:
 	rm -rf $(CC_TARGETS) $(OUT)
