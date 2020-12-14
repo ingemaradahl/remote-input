@@ -60,6 +60,7 @@ struct pointer_info {
 struct args {
     bool verbose;
     bool quiet;
+    bool use_keymap;
     char* server_host;
     char* server_port;
 };
@@ -67,6 +68,7 @@ struct args {
 static const struct args argument_defaults = {
     .verbose = false,
     .quiet = false,
+    .use_keymap = false,
     .server_host = NULL,
     .server_port = DEFAULT_SERVER_PORT_STR
 };
@@ -266,7 +268,7 @@ static bool is_quit_combination(Display* display, XKeyEvent* event) {
 }
 
 static void forward_key_button_event(Display* display, XEvent* event,
-        int connection, bool verbose, bool quiet) {
+        int connection, struct args args) {
     struct client_event cl_event;
 
     switch (event->type) {
@@ -285,23 +287,35 @@ static void forward_key_button_event(Display* display, XEvent* event,
     if (event->type == KeyPress || event->type == KeyRelease) {
         XKeyEvent* key_event = (XKeyEvent*)event;
 
-        // TODO: Add option to get the "raw" keysym (no layout)
         uint32_t keycode = key_event->keycode;
-        KeySym keysym = XkbKeycodeToKeysym(display, keycode, 0, 0);
-        cl_event.value = keysym_to_key(keysym);
+        if (args.use_keymap) {
+            KeySym keysym = XkbKeycodeToKeysym(display, keycode, 0, 0);
+            cl_event.value = keysym_to_key(keycode);
 
-        if (cl_event.value == 0) {
-            if (!quiet) {
-                printf("No known translation for %#lx " "('%s', keycode %#x)\n",
-                        keysym, XKeysymToString(keysym), keycode);
+            if (cl_event.value == 0) {
+                if (!args.quiet) {
+                    printf("No known translation for %#lx ('%s', "
+                            "keycode %#x)\n",
+                            keysym, XKeysymToString(keysym), keycode);
+                }
+                return;
             }
-            return;
-        }
 
-        if (verbose) {
-            printf("[KEY %s] %#lx ('%s', keycode %#x) => %u\n",
-                    cl_event.type == EV_KEY_DOWN ? "DOWN" : "  UP",
-                    keysym, XKeysymToString(keysym), keycode, cl_event.value);
+            if (args.verbose) {
+                printf("[KEY %s] keysym %#lx ('%s', keycode %u) => %u\n",
+                        cl_event.type == EV_KEY_DOWN ? "DOWN" : "  UP",
+                        keysym, XKeysymToString(keysym), keycode,
+                        cl_event.value);
+            }
+        } else {
+            // Xorg keycodes are input event code + 8
+            cl_event.value = keycode - 8;
+
+            if (args.verbose) {
+                printf("[KEY %s] keycode %u\n",
+                        cl_event.type == EV_KEY_DOWN ? "DOWN" : "  UP",
+                        cl_event.value);
+            }
         }
     } else {
         XButtonEvent* button_event = (XButtonEvent*)event;
@@ -318,7 +332,7 @@ static void forward_key_button_event(Display* display, XEvent* event,
             cl_event.type = button == 4 || button == 5 ? EV_WHEEL : EV_HWHEEL;
             cl_event.value = button == 5 || button == 6 ? -1 : 1;
 
-            if (verbose) {
+            if (args.verbose) {
                 printf("[BUTTON DOWN] %u => WHEEL %u\n", button,
                         cl_event.type);
             }
@@ -329,7 +343,7 @@ static void forward_key_button_event(Display* display, XEvent* event,
                 return;
             }
 
-            if (verbose) {
+            if (args.verbose) {
                 printf("[BUTTON %s] %u => %u\n",
                         cl_event.type == EV_KEY_DOWN ? "DOWN" : "  UP",
                         button, cl_event.value);
@@ -343,9 +357,11 @@ static void forward_key_button_event(Display* display, XEvent* event,
 static void usage(const char* program_name) {
     printf("Usage: %s [OPTION] HOSTNAME [PORT]\n", program_name);
     puts("\nOptions:\n"
-            "  -v  --verbose    write emitted events to stdout\n"
-            "  -q  --quiet      suppress informative messages\n"
-            "  -h  --help       show this help text and exit");
+            "  -m  --use-keymap     translate key presses using the X keymap "
+            "table\n"
+            "  -v  --verbose        write emitted events to stdout\n"
+            "  -q  --quiet          suppress informative messages\n"
+            "  -h  --help           show this help text and exit");
 }
 
 static struct args parse_args(int argc, char* argv[]) {
@@ -416,8 +432,7 @@ static void main_loop(Display* display, int connection, struct args args, struct
                 if (consume_autorepeat_event(display, &e)) {
                     break;
                 }
-                forward_key_button_event(display, &e, connection, args.verbose,
-                        args.quiet);
+                forward_key_button_event(display, &e, connection, args);
                 break;
             case MotionNotify:
                 {
