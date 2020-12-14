@@ -46,6 +46,11 @@ struct point {
     uint16_t y;
 };
 
+struct size {
+    uint16_t width;
+    uint16_t height;
+};
+
 struct pointer_info {
     struct point original_position;
     struct point reset_position;
@@ -65,15 +70,16 @@ static const struct args argument_defaults = {
     .server_port = DEFAULT_SERVER_PORT_STR
 };
 
-static void get_screen_size(Display* display, uint16_t* ret_w,
-        uint16_t* ret_h) {
+static struct size get_screen_size(Display* display) {
     Window root_window = DefaultRootWindow(display);
 
     XWindowAttributes attributes;
     XGetWindowAttributes(display, root_window, &attributes);
 
-    *ret_w = attributes.width;
-    *ret_h = attributes.height;
+    return (struct size) {
+        .width = attributes.width,
+        .height = attributes.height
+    };
 }
 
 static int32_t grab_root_window_keyboard(Display* display) {
@@ -165,12 +171,11 @@ static int32_t lock_pointer(Display* display,
         return grab_result;
     }
 
-    uint16_t screen_width, screen_height;
-    get_screen_size(display, &screen_width, &screen_height);
+    struct size screen_size = get_screen_size(display);
 
     /* Reset the pointer to the center of the screen to avoid edge conflicts */
-    pointer_info->reset_position.x = screen_width / 2;
-    pointer_info->reset_position.y = screen_height / 2;
+    pointer_info->reset_position.x = screen_size.width / 2;
+    pointer_info->reset_position.y = screen_size.height / 2;
 
     reset_pointer(display, &pointer_info->reset_position);
 
