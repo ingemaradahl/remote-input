@@ -318,7 +318,7 @@ void device_release_all_keys(struct input_device* device) {
     if (device->event_fd < 0) return;
 
     uint8_t keys[(KEY_MAX + (8 - 1)) / 8] = {0};
-    if (ioctl(device->event_fd, EVIOCGKEY(sizeof(keys)), &keys)) {
+    if (ioctl(device->event_fd, EVIOCGKEY(sizeof(keys)), &keys) == -1) {
         LOG_ERRNO("ioctl");
         return;
     }
